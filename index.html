@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>问答笔记本</title>
+  <!-- 引用 PWA 清单 -->
+  <link rel="manifest" href="manifest.json">
+  <!-- 适配 iOS Safari 添加到主屏幕 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="问答笔记本">
+  <!-- 图标引用 (为PWA准备) -->
+  <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📘</text></svg>">
+  <!-- Font Awesome 图标库 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#f4f7fc; font-family:'Segoe UI',Roboto,system-ui,sans-serif; padding:16px 12px; display:flex; justify-content:center; min-height:100vh; }
+    .app-container { max-width:800px; width:100%; background:white; border-radius:28px; box-shadow:0 20px 40px -12px rgba(0,20,40,0.25); padding:20px 18px 30px; }
+    /* 手机端优化 */
+    @media (max-width:600px) {
+      body { padding:10px 8px; }
+      .app-container { padding:14px 12px 24px; border-radius:20px; }
+      .qa-item { padding:12px 14px; }
+      .qa-question { font-size:15px; }
+      .qa-answer { margin-left:0; padding-left:12px; font-size:14px; }
+      .qa-footer { flex-direction:column; align-items:stretch; gap:8px; }
+      .badge-group { flex-wrap:wrap; }
+      .btn { padding:10px 14px; font-size:13px; }
+      .add-qa-row { flex-direction:column; align-items:stretch; border-radius:24px; padding:14px; }
+      .add-qa-row input, .add-qa-row textarea, .add-qa-row select { flex:1 1 auto; width:100%; }
+      .qa-actions button { width:40px; height:40px; font-size:16px; }
+      .qa-category-select { padding:6px 10px; font-size:14px; }
+    }
+    h1 { font-size:24px; font-weight:600; color:#0b1f3b; display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+    h1 i { color:#2a7de1; font-size:24px; }
+    .toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin:12px 0 16px; border-bottom:1px solid #e6edf4; padding-bottom:14px; }
+    .left-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .btn { background:white; border:1px solid #d0ddee; padding:8px 16px; border-radius:60px; font-weight:500; font-size:14px; color:#1f3a5f; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:0.2s; background:#f9fcff; box-shadow:0 1px 2px rgba(0,0,0,0.02); }
+    .btn i { font-size:14px; color:#3a6a9e; }
+    .btn-primary { background:#1a5bbf; border:1px solid #1a5bbf; color:white; }
+    .btn-primary i { color:white; }
+    .btn-primary:hover { background:#124a9e; border-color:#124a9e; }
+    .btn-outline { background:transparent; border:1px solid #d0ddee; }
+    .btn-outline:hover { background:#eaf0fa; border-color:#b0c6e0; }
+    .btn-danger { color:#b13e3e; border-color:#f5d6d6; }
+    .btn-danger i { color:#b13e3e; }
+    .btn-danger:hover { background:#ffe9e9; border-color:#dba8a8; }
+    .last-saved { font-size:12px; color:#4b6a8a; background:#eef4fa; padding:4px 14px; border-radius:40px; white-space:nowrap; display:inline-flex; align-items:center; gap:4px; }
+    .last-saved i { font-size:12px; }
+    .category-tabs { display:flex; flex-wrap:wrap; gap:6px 4px; margin:4px 0 10px; border-bottom:1px solid #e1eaf1; padding-bottom:8px; }
+    .category-tab { background:#f0f5fd; border:none; padding:5px 14px 5px 12px; border-radius:40px; font-size:13px; font-weight:500; color:#1a3b5e; display:flex; align-items:center; gap:6px; cursor:pointer; transition:0.15s; border:1px solid transparent; }
+    .category-tab i { font-size:12px; color:#4f74a0; }
+    .category-tab.active { background:#1a5bbf; color:white; border-color:#1a5bbf; box-shadow:0 4px 8px rgba(26,91,191,0.15); }
+    .category-tab.active i { color:white; }
+    .category-tab .badge { background:rgba(0,0,0,0.08); border-radius:30px; padding:0px 8px; font-size:11px; font-weight:600; }
+    .category-tab.active .badge { background:rgba(255,255,255,0.2); }
+    .add-category-btn { background:transparent; border:1px dashed #b8cde0; padding:3px 12px; border-radius:40px; font-size:12px; color:#2a5d8f; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:0.15s; }
+    .add-category-btn:hover { background:#e6f0fe; border-color:#7fa1cc; }
+    .importance-tabs { display:flex; flex-wrap:wrap; gap:6px 4px; margin:0 0 10px 0; padding-bottom:4px; border-bottom:1px solid #ecf2f9; }
+    .imp-tab { background:#f5f9ff; border:1px solid #dae5f0; padding:3px 14px 3px 12px; border-radius:40px; font-size:12px; font-weight:500; color:#1f3f62; display:inline-flex; align-items:center; gap:4px; cursor:pointer; transition:0.15s; }
+    .imp-tab i { font-size:12px; color:#4a709b; }
+    .imp-tab.active { background:#1a5bbf; color:white; border-color:#1a5bbf; }
+    .imp-tab.active i { color:white; }
+    .imp-tab .badge { background:rgba(0,0,0,0.06); border-radius:30px; padding:0px 6px; font-size:10px; font-weight:600; }
+    .imp-tab.active .badge { background:rgba(255,255,255,0.2); }
+    .qa-list { display:flex; flex-direction:column; gap:12px; margin-top:6px; min-height:140px; }
+    .qa-item { background:white; border-radius:16px; padding:14px 16px 14px; border:1px solid #e7eef7; box-shadow:0 2px 6px -2px rgba(0,20,30,0.06); }
+    .qa-item:hover { border-color:#cbddea; }
+    .qa-header { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:8px; }
+    .qa-question { font-weight:600; font-size:16px; color:#0d2847; flex:1 1 160px; display:flex; align-items:center; gap:8px; }
+    .qa-question .q-icon { font-size:16px; color:#2a7de1; }
+    .qa-meta { display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; font-size:12px; color:#3b5d7e; }
+    .qa-meta .time { background:#f0f6fe; padding:2px 10px; border-radius:30px; font-size:11px; color:#1f4b78; }
+    .qa-actions { display:flex; gap:2px; align-items:center; }
+    .qa-actions button { background:transparent; border:none; width:36px; height:36px; border-radius:40px; font-size:14px; color:#3d638b; cursor:pointer; transition:0.1s; display:inline-flex; align-items:center; justify-content:center; }
+    .qa-actions button:hover { background:#e2edfc; color:#0a3c74; }
+    .qa-actions .del-btn:hover { background:#fee8e8; color:#b13e3e; }
+    .qa-answer { margin:6px 0 8px 0; padding-left:12px; border-left:3px solid #cfdef0; color:#1d3857; font-size:14px; line-height:1.5; word-break:break-word; }
+    .qa-answer .answer-label { font-weight:500; color:#3f6b97; margin-right:6px; font-size:12px; }
+    .qa-answer textarea { width:100%; border:1px solid #d8e4f0; border-radius:14px; padding:10px 12px; font-family:inherit; font-size:14px; resize:vertical; background:#fafdff; margin-top:4px; }
+    .qa-answer textarea:focus { outline:none; border-color:#2a7de1; box-shadow:0 0 0 3px rgba(42,125,225,0.12); }
+    .qa-footer { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-top:8px; gap:8px; border-top:1px solid #eef4fa; padding-top:10px; }
+    .badge-group { display:flex; flex-wrap:wrap; gap:4px; }
+    .badge-icon { background:#f0f5fd; border-radius:40px; padding:3px 10px 3px 8px; font-size:12px; display:inline-flex; align-items:center; gap:4px; cursor:pointer; border:1px solid transparent; transition:0.1s; color:#2a4b73; }
+    .badge-icon i { font-size:12px; }
+    .badge-icon.active { background:#dce8fa; border-color:#9cb9df; font-weight:500; }
+    .badge-icon.important { background:#fee9e6; color:#a1423a; }
+    .badge-icon.important.active { background:#fdd3cd; border-color:#d18d83; }
+    .badge-icon.normal { background:#e6f0fa; color:#1f5582; }
+    .badge-icon.normal.active { background:#c9ddf5; border-color:#88adcf; }
+    .badge-icon.favorite { background:#fef6e0; color:#a77b2b; }
+    .badge-icon.favorite.active { background:#fceec2; border-color:#dbb45a; }
+    .empty-message { text-align:center; color:#6e8bb0; padding:40px 20px; font-size:15px; background:#f6faff; border-radius:40px; border:1px dashed #c5d8ed; }
+    .hidden { display:none !important; }
+    .add-qa-row { background:#f6fbff; border-radius:40px; padding:12px 16px; margin:12px 0 6px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; border:1px solid #dbe6f2; }
+    @media (max-width:600px) {
+      .add-qa-row { flex-direction:column; align-items:stretch; border-radius:20px; padding:14px; }
+      .add-qa-row input, .add-qa-row textarea, .add-qa-row select { width:100%; }
+    }
+    .add-qa-row input, .add-qa-row textarea { border:1px solid #d4e0ee; border-radius:40px; padding:10px 16px; font-size:14px; background:white; flex:1 1 140px; font-family:inherit; }
+    .add-qa-row textarea { flex:2 1 180px; border-radius:20px; resize:vertical; }
+    .add-qa-row input:focus, .add-qa-row textarea:focus { outline:none; border-color:#2a7de1; box-shadow:0 0 0 3px rgba(42,125,225,0.10); }
+    .add-qa-row .btn { border-radius:40px; padding:10px 20px; }
+    .qa-category-select { border:1px solid #d4e0ee; border-radius:40px; padding:4px 10px 4px 14px; font-size:13px; background:white; color:#1f3a5f; cursor:pointer; outline:none; transition:0.15s; }
+    .qa-category-select:hover { border-color:#2a7de1; }
+    .qa-category-select:focus { border-color:#2a7de1; box-shadow:0 0 0 3px rgba(42,125,225,0.08); }
+    /* 安装提示横幅 (PWA) */
+    .install-banner { background:#e8f0fe; border-radius:16px; padding:12px 16px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border:1px solid #c5d8ed; }
+    .install-banner span { font-size:14px; color:#1a3b5e; }
+    .install-banner .btn { font-size:13px; padding:6px 16px; }
+  </style>
+</head>
+<body>
+<div class="app-container" id="app">
+  <!-- PWA 安装提示 (仅在手机上显示) -->
+  <div class="install-banner" id="installBanner" style="display:none;">
+    <span><i class="fas fa-mobile-alt" style="margin-right:8px;"></i> 安装到主屏幕，像App一样使用</span>
+    <button class="btn btn-primary" id="installBtn"><i class="fas fa-download"></i> 安装</button>
+  </div>
+
+  <header style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+    <h1><i class="fas fa-comment-dots"></i> 问答笔记本</h1>
+    <div class="last-saved" id="lastSavedDisplay"><i class="far fa-clock"></i> <span id="lastSavedTime">--</span></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="left-actions">
+      <button class="btn btn-primary" id="addQaBtn"><i class="fas fa-plus-circle"></i> 新增</button>
+      <button class="btn btn-outline" id="exportWordBtn"><i class="fas fa-file-word"></i> 导出</button>
+      <button class="btn btn-outline" id="clearAllBtn"><i class="fas fa-trash-alt"></i> 清空</button>
+    </div>
+  </div>
+
+  <div class="importance-tabs" id="importanceTabsContainer"></div>
+  <div class="category-tabs" id="categoryTabsContainer"></div>
+  <div id="qaListContainer" class="qa-list"></div>
+
+  <div class="add-qa-row hidden" id="addQaRow">
+    <input type="text" id="newQuestionInput" placeholder="问题标题" />
+    <textarea id="newAnswerInput" rows="1" placeholder="回答内容…"></textarea>
+    <select id="newCategorySelect" style="border-radius:40px;padding:10px 16px;border:1px solid #d4e0ee;background:white;font-size:14px;"></select>
+    <button class="btn btn-primary" id="confirmAddBtn"><i class="fas fa-check"></i> 添加</button>
+    <button class="btn btn-outline" id="cancelAddBtn" style="padding:10px 18px;">取消</button>
+  </div>
+</div>
+
+<script>
+  (function() {
+    "use strict";
+    let qaData = [];
+    let categories = ['全部', '默认'];
+    let currentCategory = '全部';
+    let currentImportance = '全部';
+    let nextId = 1000;
+    let lastEditTime = new Date();
+
+    const container = document.getElementById('qaListContainer');
+    const tabsContainer = document.getElementById('categoryTabsContainer');
+    const impTabsContainer = document.getElementById('importanceTabsContainer');
+    const lastSavedSpan = document.getElementById('lastSavedTime');
+    const addRow = document.getElementById('addQaRow');
+    const newQuestion = document.getElementById('newQuestionInput');
+    const newAnswer = document.getElementById('newAnswerInput');
+    const newCategorySelect = document.getElementById('newCategorySelect');
+    const confirmAddBtn = document.getElementById('confirmAddBtn');
+    const cancelAddBtn = document.getElementById('cancelAddBtn');
+    const addQaBtn = document.getElementById('addQaBtn');
+    const exportBtn = document.getElementById('exportWordBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const installBanner = document.getElementById('installBanner');
+    const installBtn = document.getElementById('installBtn');
+
+    function formatTime(date) {
+      const d = date || new Date();
+      const fmt = n => n.toString().padStart(2,'0');
+      return `${d.getFullYear()}-${fmt(d.getMonth()+1)}-${fmt(d.getDate())} ${fmt(d.getHours())}:${fmt(d.getMinutes())}`;
+    }
+    function updateLastSaved() {
+      lastSavedSpan.textContent = formatTime(lastEditTime);
+    }
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 数据持久化 (存到 localStorage)
+    function saveData() {
+      try {
+        localStorage.setItem('qaData', JSON.stringify(qaData));
+        localStorage.setItem('categories', JSON.stringify(categories));
+        localStorage.setItem('nextId', String(nextId));
+        localStorage.setItem('lastEditTime', JSON.stringify(lastEditTime));
+      } catch(e) {}
+    }
+    function loadData() {
+      try {
+        const saved = localStorage.getItem('qaData');
+        if (saved) {
+          qaData = JSON.parse(saved);
+          const cats = localStorage.getItem('categories');
+          if (cats) categories = JSON.parse(cats);
+          const id = localStorage.getItem('nextId');
+          if (id) nextId = parseInt(id);
+          const time = localStorage.getItem('lastEditTime');
+          if (time) lastEditTime = new Date(JSON.parse(time));
+          return true;
+        }
+      } catch(e) {}
+      return false;
+    }
+
+    // 初始化数据 (优先加载本地存储)
+    function initData() {
+      if (!loadData()) {
+        // 无存储数据，使用示例
+        const now = new Date();
+        const t = formatTime(now);
+        qaData = [
+          { id: nextId++, question: '如何快速上手？', answer: '可以先浏览“默认”分类下的示例，然后使用新增功能添加自己的问答。', category: '默认', importance: 'normal', time: t },
+          { id: nextId++, question: '支持哪些分类？', answer: '你可以自由创建分类，并通过顶部分类栏筛选。', category: '默认', importance: 'important', time: t },
+          { id: nextId++, question: '数据存在哪里？', answer: '数据保存在手机本地，清除浏览器缓存会丢失。建议定期导出Word备份。', category: '默认', importance: 'favorite', time: t },
+          { id: nextId++, question: '如何收藏重要问答？', answer: '点击问答卡片下方的“收藏”图标即可标记，然后在上方“收藏”标签中查看。', category: '默认', importance: 'favorite', time: t },
+        ];
+        const cats = new Set(qaData.map(item => item.category));
+        categories = ['全部', ...Array.from(cats)];
+        lastEditTime = now;
+        saveData();
+      }
+      updateLastSaved();
+    }
+    initData();
+
+    function populateCategorySelect() {
+      const currentVal = newCategorySelect.value;
+      newCategorySelect.innerHTML = '';
+      categories.forEach(cat => {
+        if (cat === '全部') return;
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        newCategorySelect.appendChild(opt);
+      });
+      if (categories.includes(currentVal) && currentVal !== '全部') {
+        newCategorySelect.value = currentVal;
+      } else {
+        newCategorySelect.value = categories.length > 1 ? categories[1] : '默认';
+      }
+    }
+
+    function getFilteredData() {
+      let filtered = qaData;
+      if (currentCategory !== '全部') {
+        filtered = filtered.filter(item => item.category === currentCategory);
+      }
+      if (currentImportance !== '全部') {
+        filtered = filtered.filter(item => item.importance === currentImportance);
+      }
+      return filtered;
+    }
+
+    function refreshCategories() {
+      const cats = new Set(qaData.map(item => item.category));
+      let newCats = ['全部', ...Array.from(cats)];
+      if (newCats.length === 1) newCats.push('默认');
+      categories = newCats;
+      if (!categories.includes(currentCategory) && currentCategory !== '全部') {
+        currentCategory = '全部';
+      }
+    }
+
+    function renderImportanceTabs() {
+      const fragment = document.createDocumentFragment();
+      const impTypes = [
+        { key: '全部', label: '全部', icon: 'fa-list' },
+        { key: 'important', label: '重要', icon: 'fa-exclamation-circle' },
+        { key: 'normal', label: '一般', icon: 'fa-circle' },
+        { key: 'favorite', label: '收藏', icon: 'fa-star' },
+      ];
+      impTypes.forEach(type => {
+        const tab = document.createElement('button');
+        tab.className = `imp-tab${currentImportance === type.key ? ' active' : ''}`;
+        const count = type.key === '全部' ? qaData.length : qaData.filter(item => item.importance === type.key).length;
+        tab.innerHTML = `<i class="fas ${type.icon}"></i> ${type.label} <span class="badge">${count}</span>`;
+        tab.dataset.imp = type.key;
+        tab.addEventListener('click', function() {
+          currentImportance = this.dataset.imp;
+          renderImportanceTabs();
+          renderQaList();
+        });
+        fragment.appendChild(tab);
+      });
+      impTabsContainer.innerHTML = '';
+      impTabsContainer.appendChild(fragment);
+    }
+
+    function renderTabs() {
+      const fragment = document.createDocumentFragment();
+      categories.forEach(cat => {
+        const tab = document.createElement('button');
+        tab.className = `category-tab${cat === currentCategory ? ' active' : ''}`;
+        const count = cat === '全部' ? qaData.length : qaData.filter(item => item.category === cat).length;
+        tab.innerHTML = `${cat} <span class="badge">${count}</span>`;
+        tab.dataset.category = cat;
+        tab.addEventListener('click', function() {
+          currentCategory = this.dataset.category;
+          renderTabs();
+          renderQaList();
+        });
+        fragment.appendChild(tab);
+      });
+      const addCatBtn = document.createElement('button');
+      addCatBtn.className = 'add-category-btn';
+      addCatBtn.innerHTML = '<i class="fas fa-plus-circle"></i> 新建分类';
+      addCatBtn.addEventListener('click', function() {
+        const newCat = prompt('请输入新分类名称:');
+        if (newCat && newCat.trim() !== '' && !categories.includes(newCat.trim())) {
+          categories.push(newCat.trim());
+          currentCategory = newCat.trim();
+          renderTabs();
+          renderQaList();
+          populateCategorySelect();
+          saveData();
+        } else if (newCat && categories.includes(newCat.trim())) {
+          alert('分类已存在');
+        }
+      });
+      fragment.appendChild(addCatBtn);
+      tabsContainer.innerHTML = '';
+      tabsContainer.appendChild(fragment);
+    }
+
+    function moveQaToCategory(itemId, newCategory) {
+      const item = qaData.find(q => q.id === itemId);
+      if (!item || item.category === newCategory) return;
+      item.category = newCategory;
+      item.time = formatTime(new Date());
+      lastEditTime = new Date();
+      updateLastSaved();
+      if (!categories.includes(newCategory)) categories.push(newCategory);
+      refreshCategories();
+      if (!categories.includes(currentCategory) && currentCategory !== '全部') currentCategory = '全部';
+      renderTabs();
+      renderQaList();
+      renderImportanceTabs();
+      populateCategorySelect();
+      saveData();
+    }
+
+    function renderQaList() {
+      const filtered = getFilteredData();
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-message"><i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;opacity:0.5;"></i> 当前没有问答，点击 “新增” 创建</div>`;
+        return;
+      }
+      const fragment = document.createDocumentFragment();
+      filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'qa-item';
+        div.dataset.id = item.id;
+
+        const header = document.createElement('div');
+        header.className = 'qa-header';
+        const qDiv = document.createElement('div');
+        qDiv.className = 'qa-question';
+        qDiv.innerHTML = `<span class="q-icon"><i class="fas fa-question-circle"></i></span> ${escapeHtml(item.question)}`;
+        const meta = document.createElement('div');
+        meta.className = 'qa-meta';
+        meta.innerHTML = `<span class="time"><i class="far fa-calendar-alt"></i> ${item.time || '--'}</span>
+          <span class="qa-actions">
+            <button class="edit-btn" title="编辑回答"><i class="fas fa-pen"></i></button>
+            <button class="del-btn" title="删除"><i class="fas fa-trash"></i></button>
+          </span>`;
+        header.appendChild(qDiv);
+        header.appendChild(meta);
+
+        const ansDiv = document.createElement('div');
+        ansDiv.className = 'qa-answer';
+        const answerText = document.createElement('div');
+        answerText.className = 'answer-text';
+        answerText.innerHTML = `<span class="answer-label"><i class="far fa-comment"></i> 回答</span> ${escapeHtml(item.answer)}`;
+        ansDiv.appendChild(answerText);
+
+        const footer = document.createElement('div');
+        footer.className = 'qa-footer';
+        const badgeGroup = document.createElement('div');
+        badgeGroup.className = 'badge-group';
+
+        const types = [
+          { key: 'important', label: '重要', icon: 'fas fa-exclamation-circle' },
+          { key: 'normal', label: '一般', icon: 'fas fa-circle' },
+          { key: 'favorite', label: '收藏', icon: 'fas fa-star' },
+        ];
+        types.forEach(type => {
+          const span = document.createElement('span');
+          span.className = `badge-icon ${type.key}${item.importance === type.key ? ' active' : ''}`;
+          span.innerHTML = `<i class="${type.icon}"></i> ${type.label}`;
+          span.addEventListener('click', function(e) {
+            e.stopPropagation();
+            item.importance = (item.importance === type.key) ? 'normal' : type.key;
+            lastEditTime = new Date();
+            updateLastSaved();
+            renderQaList();
+            renderTabs();
+            renderImportanceTabs();
+            saveData();
+          });
+          badgeGroup.appendChild(span);
+        });
+
+        const catSelect = document.createElement('select');
+        catSelect.className = 'qa-category-select';
+        const allCats = categories.filter(c => c !== '全部');
+        allCats.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          if (cat === item.category) opt.selected = true;
+          catSelect.appendChild(opt);
+        });
+        if (!allCats.includes(item.category)) {
+          const opt = document.createElement('option');
+          opt.value = item.category;
+          opt.textContent = item.category;
+          opt.selected = true;
+          catSelect.appendChild(opt);
+        }
+        catSelect.addEventListener('change', function() {
+          moveQaToCategory(item.id, this.value);
+        });
+
+        const catWrapper = document.createElement('span');
+        catWrapper.style.display = 'inline-flex';
+        catWrapper.style.alignItems = 'center';
+        catWrapper.style.gap = '4px';
+        catWrapper.innerHTML = `<i class="fas fa-tag" style="color:#22558a;font-size:12px;"></i>`;
+        catWrapper.appendChild(catSelect);
+
+        footer.appendChild(badgeGroup);
+        footer.appendChild(catWrapper);
+
+        div.appendChild(header);
+        div.appendChild(ansDiv);
+        div.appendChild(footer);
+
+        const delBtn = div.querySelector('.del-btn');
+        delBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (confirm(`确定删除：“${item.question}” ？`)) {
+            qaData = qaData.filter(q => q.id !== item.id);
+            refreshCategories();
+            if (!categories.includes(currentCategory) && currentCategory !== '全部') currentCategory = '全部';
+            lastEditTime = new Date();
+            updateLastSaved();
+            renderTabs();
+            renderQaList();
+            renderImportanceTabs();
+            populateCategorySelect();
+            saveData();
+          }
+        });
+
+        const editBtn = div.querySelector('.edit-btn');
+        editBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const answerDiv = div.querySelector('.answer-text');
+          const currentAnswer = item.answer;
+          const textarea = document.createElement('textarea');
+          textarea.value = currentAnswer;
+          textarea.rows = 2;
+          textarea.style.cssText = 'width:100%; margin-top:4px; border-radius:14px; padding:10px 12px; border:1px solid #b8cee6; font-family:inherit;';
+          answerDiv.innerHTML = '';
+          answerDiv.appendChild(textarea);
+          textarea.focus();
+
+          const saveBtn = document.createElement('button');
+          saveBtn.className = 'btn btn-primary';
+          saveBtn.style.marginTop = '6px';
+          saveBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
+          answerDiv.appendChild(saveBtn);
+          const cancelEditBtn = document.createElement('button');
+          cancelEditBtn.className = 'btn btn-outline';
+          cancelEditBtn.style.marginTop = '6px';
+          cancelEditBtn.style.marginLeft = '8px';
+          cancelEditBtn.innerHTML = '取消';
+          answerDiv.appendChild(cancelEditBtn);
+
+          const saveHandler = function() {
+            const newAns = textarea.value.trim();
+            if (newAns) {
+              item.answer = newAns;
+              item.time = formatTime(new Date());
+              lastEditTime = new Date();
+              updateLastSaved();
+              renderQaList();
+              renderTabs();
+              renderImportanceTabs();
+              saveData();
+            } else {
+              alert('回答不能为空');
+            }
+          };
+          saveBtn.addEventListener('click', saveHandler);
+          cancelEditBtn.addEventListener('click', function() { renderQaList(); });
+          textarea.addEventListener('keydown', function(ev) {
+            if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) saveHandler();
+          });
+        });
+
+        fragment.appendChild(div);
+      });
+      container.innerHTML = '';
+      container.appendChild(fragment);
+    }
+
+    function addNewQA() {
+      const q = newQuestion.value.trim();
+      const a = newAnswer.value.trim();
+      const cat = newCategorySelect.value || '默认';
+      if (!q || !a) { alert('问题和回答都不能为空'); return; }
+      const newItem = {
+        id: nextId++,
+        question: q,
+        answer: a,
+        category: cat,
+        importance: 'normal',
+        time: formatTime(new Date())
+      };
+      qaData.push(newItem);
+      if (!categories.includes(cat)) categories.push(cat);
+      currentCategory = cat;
+      lastEditTime = new Date();
+      updateLastSaved();
+      newQuestion.value = '';
+      newAnswer.value = '';
+      renderTabs();
+      renderQaList();
+      renderImportanceTabs();
+      populateCategorySelect();
+      addRow.classList.add('hidden');
+      saveData();
+    }
+
+    function showAddRow() {
+      addRow.classList.remove('hidden');
+      newQuestion.focus();
+      populateCategorySelect();
+    }
+
+    function exportWord() {
+      if (qaData.length === 0) { alert('没有问答可以导出'); return; }
+      let htmlContent = `<html><head><meta charset="UTF-8"><title>问答导出</title><style>body{font-family:'Segoe UI',Arial,sans-serif;padding:30px;}.qa{margin-bottom:24px;border-bottom:1px solid #ddd;padding-bottom:18px;}.q{font-weight:bold;font-size:18px;}.a{margin:8px 0 6px 20px;}.meta{color:#4a6a8a;font-size:14px;}.cat{background:#eef3f9;padding:2px 14px;border-radius:20px;}</style></head><body><h1>📋 问答知识库 导出</h1><p>导出时间: ${formatTime(new Date())}</p>`;
+      qaData.forEach(item => {
+        htmlContent += `<div class="qa"><div class="q">❓ ${escapeHtml(item.question)}</div><div class="a">💬 ${escapeHtml(item.answer)}</div><div class="meta">分类: <span class="cat">${escapeHtml(item.category)}</span>  ·  重要性: ${item.importance}  ·  更新: ${item.time}</div></div>`;
+      });
+      htmlContent += '</body></html>';
+      const blob = new Blob([htmlContent], { type: 'application/msword' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `问答导出_${formatTime(new Date()).replace(/[: ]/g,'_')}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function clearAll() {
+      if (qaData.length === 0) return;
+      if (confirm('⚠️ 确定清空所有问答吗？')) {
+        qaData = [];
+        categories = ['全部', '默认'];
+        currentCategory = '全部';
+        currentImportance = '全部';
+        lastEditTime = new Date();
+        updateLastSaved();
+        renderTabs();
+        renderQaList();
+        renderImportanceTabs();
+        populateCategorySelect();
+        saveData();
+      }
+    }
+
+    // ---------- PWA 安装提示 ----------
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBanner.style.display = 'flex';
+    });
+    installBtn.addEventListener('click', function() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(choiceResult) {
+          if (choiceResult.outcome === 'accepted') {
+            installBanner.style.display = 'none';
+          }
+          deferredPrompt = null;
+        });
+      }
+    });
+    window.addEventListener('appinstalled', function() {
+      installBanner.style.display = 'none';
+    });
+
+    // ---------- 事件绑定 ----------
+    addQaBtn.addEventListener('click', showAddRow);
+    cancelAddBtn.addEventListener('click', function() {
+      addRow.classList.add('hidden');
+      newQuestion.value = '';
+      newAnswer.value = '';
+    });
+    confirmAddBtn.addEventListener('click', addNewQA);
+    exportBtn.addEventListener('click', exportWord);
+    clearAllBtn.addEventListener('click', clearAll);
+    newAnswer.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) addNewQA();
+    });
+
+    renderImportanceTabs();
+    renderTabs();
+    renderQaList();
+    populateCategorySelect();
+    updateLastSaved();
+    addRow.classList.add('hidden');
+  })();
+</script>
+</body>
+</html>

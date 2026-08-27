@@ -1,0 +1,24 @@
+{
+  "name": "问答笔记本",
+  "short_name": "问答本",
+  "description": "一个轻量级的问答管理笔记本，支持分类、批注和导出。",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f7fc",
+  "theme_color": "#1a5bbf",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231a5bbf'/%3E%3Ctext x='50' y='72' font-size='60' text-anchor='middle' fill='white'%3E📘%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231a5bbf'/%3E%3Ctext x='50' y='72' font-size='60' text-anchor='middle' fill='white'%3E📘%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
