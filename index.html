@@ -19,7 +19,7 @@
       justify-content: center;
     }
     .app-container {
-      max-width: 1200px;
+      max-width: 1100px;
       width: 100%;
       background: white;
       border-radius: 32px;
@@ -135,7 +135,7 @@
     .search-clear:hover { color: #2a7de1; }
     .highlight { background: #f9e66b; padding: 0 2px; border-radius: 2px; font-weight: 600; }
 
-    /* ===== 分类标签（带编辑/删除） ===== */
+    /* ===== 分类标签 ===== */
     .category-tabs {
       display: flex;
       flex-wrap: wrap;
@@ -221,7 +221,7 @@
     }
     .add-category-btn:hover { background: #e6f0fe; border-color: #7fa1cc; }
 
-    /* ===== 重要性标签（统一颜色） ===== */
+    /* ===== 重要性标签 ===== */
     .importance-tabs {
       display: flex;
       flex-wrap: wrap;
@@ -253,19 +253,15 @@
       font-weight: 600;
       color: inherit;
     }
-
     .imp-tab[data-imp="important"] { background: #fee9e6; border-color: #f5cdc7; color: #a1423a; }
     .imp-tab[data-imp="important"].active { background: #fdd3cd; border-color: #d18d83; color: #7a2e26; box-shadow: 0 0 0 2px rgba(209,141,131,0.3); }
     .imp-tab[data-imp="important"] .badge { background: rgba(161,66,58,0.12); }
-
     .imp-tab[data-imp="normal"] { background: #e6f0fa; border-color: #c5d8ed; color: #1f5582; }
     .imp-tab[data-imp="normal"].active { background: #c9ddf5; border-color: #88adcf; color: #0f3a5e; box-shadow: 0 0 0 2px rgba(136,173,207,0.3); }
     .imp-tab[data-imp="normal"] .badge { background: rgba(31,85,130,0.12); }
-
     .imp-tab[data-imp="favorite"] { background: #fef6e0; border-color: #f5e5b0; color: #a77b2b; }
     .imp-tab[data-imp="favorite"].active { background: #fceec2; border-color: #dbb45a; color: #7a571a; box-shadow: 0 0 0 2px rgba(219,180,90,0.3); }
     .imp-tab[data-imp="favorite"] .badge { background: rgba(167,123,43,0.12); }
-
     .imp-tab[data-imp="全部"] { background: #f5f9ff; border-color: #dae5f0; color: #1f3f62; }
     .imp-tab[data-imp="全部"].active { background: #1a5bbf; border-color: #1a5bbf; color: white; }
     .imp-tab[data-imp="全部"].active i { color: white; }
@@ -343,13 +339,14 @@
     .qa-actions button:hover { background: #e2edfc; color: #0a3c74; }
     .qa-actions .del-btn:hover { background: #fee8e8; color: #b13e3e; }
 
+    /* ===== 回答内容（富文本显示） ===== */
     .qa-answer {
       margin: 8px 0 10px 36px;
       padding-left: 18px;
       border-left: 3px solid #cfdef0;
       color: #1d3857;
       font-size: 15px;
-      line-height: 1.6;
+      line-height: 1.8;
       word-break: break-word;
     }
     .qa-answer .answer-label {
@@ -358,21 +355,110 @@
       margin-right: 8px;
       font-size: 13px;
     }
-    .qa-answer textarea {
+    .qa-answer .answer-content {
+      display: inline;
+    }
+    .qa-answer .answer-content p {
+      margin-bottom: 8px;
+    }
+    .qa-answer .answer-content ul,
+    .qa-answer .answer-content ol {
+      padding-left: 24px;
+      margin-bottom: 8px;
+    }
+    .qa-answer .answer-content blockquote {
+      border-left: 4px solid #2a7de1;
+      padding-left: 16px;
+      color: #4a6a8a;
+      margin: 8px 0;
+    }
+
+    /* ===== 富文本编辑区 ===== */
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 6px 10px;
+      background: #f6faff;
+      border-radius: 12px 12px 0 0;
+      border: 1px solid #d4e0ee;
+      border-bottom: none;
+    }
+    .editor-toolbar button {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #3a5a7a;
+      transition: 0.15s;
+      min-width: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .editor-toolbar button:hover {
+      background: #e8f0fe;
+      border-color: #c5d8ed;
+    }
+    .editor-toolbar button.active {
+      background: #d4e0ee;
+      border-color: #a0b8d0;
+    }
+    .editor-toolbar select {
+      border: 1px solid #d4e0ee;
+      border-radius: 6px;
+      padding: 3px 6px;
+      font-size: 13px;
+      background: white;
+      outline: none;
+    }
+    .editor-toolbar input[type="color"] {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #d4e0ee;
+      border-radius: 6px;
+      padding: 2px;
+      cursor: pointer;
+      background: white;
+    }
+    .editor-toolbar .separator {
+      width: 1px;
+      background: #d4e0ee;
+      margin: 0 4px;
+    }
+
+    .qa-answer-editor {
       width: 100%;
-      border: 1px solid #d8e4f0;
-      border-radius: 16px;
+      min-height: 120px;
       padding: 12px 14px;
+      border: 1px solid #d4e0ee;
+      border-radius: 0 0 12px 12px;
       font-family: inherit;
       font-size: 15px;
-      resize: vertical;
-      background: #fafdff;
-      margin-top: 6px;
-    }
-    .qa-answer textarea:focus {
+      line-height: 1.8;
       outline: none;
+      background: white;
+      overflow-y: auto;
+    }
+    .qa-answer-editor:focus {
       border-color: #2a7de1;
-      box-shadow: 0 0 0 3px rgba(42,125,225,0.15);
+      box-shadow: 0 0 0 3px rgba(42,125,225,0.1);
+    }
+    .qa-answer-editor p {
+      margin-bottom: 8px;
+    }
+    .qa-answer-editor ul,
+    .qa-answer-editor ol {
+      padding-left: 24px;
+      margin-bottom: 8px;
+    }
+    .qa-answer-editor blockquote {
+      border-left: 4px solid #2a7de1;
+      padding-left: 16px;
+      color: #4a6a8a;
+      margin: 8px 0;
     }
 
     .qa-footer {
@@ -405,13 +491,10 @@
     }
     .badge-icon i { font-size: 14px; }
     .badge-icon.active { font-weight: 500; }
-
     .badge-icon.important { background: #fee9e6; border-color: #f5cdc7; color: #a1423a; }
     .badge-icon.important.active { background: #fdd3cd; border-color: #d18d83; }
-
     .badge-icon.normal { background: #e6f0fa; border-color: #c5d8ed; color: #1f5582; }
     .badge-icon.normal.active { background: #c9ddf5; border-color: #88adcf; }
-
     .badge-icon.favorite { background: #fef6e0; border-color: #f5e5b0; color: #a77b2b; }
     .badge-icon.favorite.active { background: #fceec2; border-color: #dbb45a; }
 
@@ -440,18 +523,22 @@
     }
     .hidden { display: none !important; }
 
+    /* ===== 新增问答行 ===== */
     .add-qa-row {
       background: #f6fbff;
-      border-radius: 60px;
-      padding: 12px 20px;
+      border-radius: 24px;
+      padding: 16px 20px;
       margin: 16px 0 8px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
       border: 1px solid #dbe6f2;
     }
-    .add-qa-row input, .add-qa-row textarea {
+    .add-qa-row .field-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .add-qa-row .field-group input,
+    .add-qa-row .field-group select {
       border: 1px solid #d4e0ee;
       border-radius: 40px;
       padding: 10px 18px;
@@ -459,18 +546,25 @@
       background: white;
       flex: 1 1 180px;
       font-family: inherit;
-    }
-    .add-qa-row textarea {
-      flex: 2 1 240px;
-      border-radius: 24px;
-      resize: vertical;
-    }
-    .add-qa-row input:focus, .add-qa-row textarea:focus {
       outline: none;
+    }
+    .add-qa-row .field-group input:focus,
+    .add-qa-row .field-group select:focus {
       border-color: #2a7de1;
       box-shadow: 0 0 0 3px rgba(42,125,225,0.12);
     }
-    .add-qa-row .btn { border-radius: 40px; padding: 10px 24px; }
+    .add-qa-row .editor-wrapper {
+      margin-bottom: 12px;
+    }
+    .add-qa-row .editor-wrapper .qa-answer-editor {
+      border-radius: 0 0 12px 12px;
+      min-height: 100px;
+    }
+    .add-qa-row .btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
 
     @media (max-width: 700px) {
       .app-container { padding: 20px 16px; }
@@ -478,6 +572,8 @@
       .search-box { flex: 1 1 100%; margin-top: 6px; }
       .category-wrapper { padding: 2px 2px 2px 12px; }
       .category-tab { font-size: 13px; }
+      .editor-toolbar { gap: 2px; }
+      .editor-toolbar button { padding: 3px 6px; font-size: 13px; }
     }
   </style>
 </head>
@@ -506,12 +602,45 @@
   <div class="category-tabs" id="categoryTabsContainer"></div>
   <div id="qaListContainer" class="qa-list"></div>
 
+  <!-- ===== 新增问答行（带富文本编辑器） ===== -->
   <div class="add-qa-row hidden" id="addQaRow">
-    <input type="text" id="newQuestionInput" placeholder="问题标题" />
-    <textarea id="newAnswerInput" rows="1" placeholder="回答内容…"></textarea>
-    <select id="newCategorySelect" style="border-radius:40px;padding:10px 18px;border:1px solid #d4e0ee;background:white;font-size:14px;"></select>
-    <button class="btn btn-primary" id="confirmAddBtn"><i class="fas fa-check"></i> 添加</button>
-    <button class="btn btn-outline" id="cancelAddBtn" style="padding:10px 18px;">取消</button>
+    <div class="field-group">
+      <input type="text" id="newQuestionInput" placeholder="问题标题" />
+      <select id="newCategorySelect" style="border-radius:40px;padding:10px 18px;border:1px solid #d4e0ee;background:white;font-size:14px;"></select>
+    </div>
+    <div class="editor-wrapper">
+      <!-- 工具栏 -->
+      <div class="editor-toolbar" id="editorToolbar">
+        <button type="button" data-cmd="bold" title="加粗"><b>B</b></button>
+        <button type="button" data-cmd="italic" title="斜体"><i>I</i></button>
+        <button type="button" data-cmd="underline" title="下划线"><u>U</u></button>
+        <span class="separator"></span>
+        <select id="fontSizeSelect" title="字体大小">
+          <option value="3">正常</option>
+          <option value="4">大</option>
+          <option value="5">更大</option>
+          <option value="6">最大</option>
+          <option value="1">极小</option>
+          <option value="2">小</option>
+        </select>
+        <span class="separator"></span>
+        <input type="color" id="colorPicker" value="#1d3857" title="文字颜色">
+        <span class="separator"></span>
+        <button type="button" data-cmd="insertUnorderedList" title="无序列表"><i class="fas fa-list-ul"></i></button>
+        <button type="button" data-cmd="insertOrderedList" title="有序列表"><i class="fas fa-list-ol"></i></button>
+        <span class="separator"></span>
+        <button type="button" data-cmd="indent" title="增加缩进"><i class="fas fa-indent"></i></button>
+        <button type="button" data-cmd="outdent" title="减少缩进"><i class="fas fa-outdent"></i></button>
+        <span class="separator"></span>
+        <button type="button" data-cmd="removeFormat" title="清除格式"><i class="fas fa-eraser"></i></button>
+      </div>
+      <!-- 编辑器 -->
+      <div class="qa-answer-editor" id="newAnswerEditor" contenteditable="true" placeholder="回答内容…"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="confirmAddBtn"><i class="fas fa-check"></i> 添加</button>
+      <button class="btn btn-outline" id="cancelAddBtn">取消</button>
+    </div>
   </div>
 </div>
 
@@ -537,7 +666,7 @@
     const lastSavedSpan = document.getElementById('lastSavedTime');
     const addRow = document.getElementById('addQaRow');
     const newQuestion = document.getElementById('newQuestionInput');
-    const newAnswer = document.getElementById('newAnswerInput');
+    const newAnswerEditor = document.getElementById('newAnswerEditor');
     const newCategorySelect = document.getElementById('newCategorySelect');
     const confirmAddBtn = document.getElementById('confirmAddBtn');
     const cancelAddBtn = document.getElementById('cancelAddBtn');
@@ -569,15 +698,22 @@
     }
 
     function highlightText(text, keyword) {
-      if (!keyword || !text) return escapeHtml(text);
-      const escaped = escapeHtml(text);
+      if (!keyword || !text) return text;
       const kw = escapeHtml(keyword);
       try {
         const regex = new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-        return escaped.replace(regex, match => `<span class="highlight">${match}</span>`);
+        return text.replace(regex, match => `<span class="highlight">${match}</span>`);
       } catch (e) {
-        return escaped;
+        return text;
       }
+    }
+
+    // 从HTML中提取纯文本用于搜索
+    function stripHtml(html) {
+      if (!html) return '';
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      return div.textContent || div.innerText || '';
     }
 
     // ============================================================
@@ -620,11 +756,11 @@
       const now = new Date();
       const t = formatTime(now);
       return [
-        { id: 1000, question: '📌 如何快速上手？', answer: '点击"新增问答"添加内容，用"重要/一般/收藏"标记优先级，通过分类和搜索快速筛选。', category: '默认', importance: 'important', time: t },
-        { id: 1001, question: '💡 数据存在哪里？安全吗？', answer: '所有数据保存在您浏览器本地，不会上传任何服务器。建议定期用"导出Word"备份。', category: '默认', importance: 'important', time: t },
-        { id: 1002, question: '📂 如何创建和管理分类？', answer: '点击"新建分类"创建。鼠标悬停在分类标签上，会出现 ✏️ 和 🗑️ 按钮，可编辑或删除分类。', category: '默认', importance: 'normal', time: t },
-        { id: 1003, question: '⭐ 收藏功能有什么用？', answer: '点击问答下方的"收藏"按钮标记，再点击顶部"收藏"标签，即可快速查看所有收藏内容。', category: '默认', importance: 'favorite', time: t },
-        { id: 1004, question: '🔍 如何搜索问答？', answer: '在右上角搜索框输入关键词，系统会实时筛选匹配的问题和回答，匹配内容会高亮显示。', category: '默认', importance: 'normal', time: t },
+        { id: 1000, question: '📌 如何快速上手？', answer: '<p>点击"<strong>新增问答</strong>"添加内容，用"<strong>重要/一般/收藏</strong>"标记优先级，通过分类和搜索快速筛选。</p><p>支持富文本编辑：<strong>加粗</strong>、<em>斜体</em>、<u>下划线</u>、不同<font size="5">字体大小</font>和<font color="#e74c3c">颜色</font>。</p>', category: '默认', importance: 'important', time: t },
+        { id: 1001, question: '💡 数据存在哪里？安全吗？', answer: '<p>所有数据保存在您<strong>浏览器本地</strong>，不会上传任何服务器。建议定期用"导出Word"备份。</p><ul><li>换设备需要手动导入导出</li><li>清除浏览器网站数据会丢失</li></ul>', category: '默认', importance: 'important', time: t },
+        { id: 1002, question: '📂 如何创建和管理分类？', answer: '<p>点击"<strong>新建分类</strong>"创建。鼠标悬停在分类标签上，会出现 ✏️ 和 🗑️ 按钮，可编辑或删除分类。</p><ol><li>点击"新建分类"输入名称</li><li>悬停分类标签点击✏️重命名</li><li>点击🗑️删除分类（问答自动移到"默认"）</li></ol>', category: '默认', importance: 'normal', time: t },
+        { id: 1003, question: '⭐ 收藏功能有什么用？', answer: '<p>点击问答下方的"<strong>收藏</strong>"按钮标记，再点击顶部"<strong>收藏</strong>"标签，即可快速查看所有收藏内容。</p><blockquote>小提示：结合分类筛选，可以更精准地管理知识库。</blockquote>', category: '默认', importance: 'favorite', time: t },
+        { id: 1004, question: '🔍 如何搜索问答？', answer: '<p>在右上角搜索框输入关键词，系统会实时筛选匹配的问题和回答，匹配内容会<mark>高亮显示</mark>。</p><p>搜索范围包括：<strong>问题标题</strong>和<strong>回答正文</strong>。</p>', category: '默认', importance: 'normal', time: t },
       ];
     }
 
@@ -707,6 +843,53 @@
     }
 
     // ============================================================
+    //  富文本编辑器命令
+    // ============================================================
+    function execEditorCommand(cmd, value) {
+      document.execCommand(cmd, false, value || null);
+      newAnswerEditor.focus();
+    }
+
+    function setupEditorToolbar() {
+      const toolbar = document.getElementById('editorToolbar');
+
+      // 格式按钮
+      toolbar.querySelectorAll('[data-cmd]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const cmd = this.dataset.cmd;
+          execEditorCommand(cmd);
+        });
+      });
+
+      // 字体大小
+      document.getElementById('fontSizeSelect').addEventListener('change', function() {
+        execEditorCommand('fontSize', this.value);
+        this.value = '3'; // 重置
+      });
+
+      // 颜色
+      document.getElementById('colorPicker').addEventListener('input', function() {
+        execEditorCommand('foreColor', this.value);
+      });
+
+      // 回车键不产生<div>而是<p>
+      newAnswerEditor.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          document.execCommand('insertParagraph', false, null);
+          e.preventDefault();
+        }
+      });
+
+      // placeholder效果
+      newAnswerEditor.addEventListener('focus', function() {
+        if (this.innerHTML === '<p><br></p>' || this.innerText.trim() === '') {
+          this.innerHTML = '';
+        }
+      });
+    }
+
+    // ============================================================
     //  渲染函数
     // ============================================================
     function populateCategorySelect() {
@@ -736,10 +919,11 @@
       }
       if (searchKeyword.trim() !== '') {
         const kw = searchKeyword.trim().toLowerCase();
-        filtered = filtered.filter(item =>
-          item.question.toLowerCase().includes(kw) ||
-          item.answer.toLowerCase().includes(kw)
-        );
+        filtered = filtered.filter(item => {
+          const qText = stripHtml(item.question);
+          const aText = stripHtml(item.answer);
+          return qText.toLowerCase().includes(kw) || aText.toLowerCase().includes(kw);
+        });
       }
       return filtered;
     }
@@ -885,7 +1069,8 @@
         header.className = 'qa-header';
         const qDiv = document.createElement('div');
         qDiv.className = 'qa-question';
-        qDiv.innerHTML = `<span class="q-icon"><i class="fas fa-question-circle"></i></span> ${highlightText(item.question, kw)}`;
+        const qHtml = kw ? highlightText(escapeHtml(item.question), kw) : escapeHtml(item.question);
+        qDiv.innerHTML = `<span class="q-icon"><i class="fas fa-question-circle"></i></span> ${qHtml}`;
 
         const meta = document.createElement('div');
         meta.className = 'qa-meta';
@@ -897,12 +1082,25 @@
         header.appendChild(qDiv);
         header.appendChild(meta);
 
+        // 回答（富文本显示）
         const ansDiv = document.createElement('div');
         ansDiv.className = 'qa-answer';
-        const answerText = document.createElement('div');
-        answerText.className = 'answer-text';
-        answerText.innerHTML = `<span class="answer-label"><i class="far fa-comment"></i> 回答</span> ${highlightText(item.answer, kw)}`;
-        ansDiv.appendChild(answerText);
+        const answerContent = document.createElement('div');
+        answerContent.className = 'answer-content';
+        // 高亮处理（在HTML中搜索关键词）
+        let answerHtml = item.answer || '';
+        if (kw) {
+          const textOnly = stripHtml(answerHtml);
+          if (textOnly.toLowerCase().includes(kw.toLowerCase())) {
+            // 简单高亮：在文本中替换
+            const escapedKw = escapeHtml(kw);
+            const regex = new RegExp(escapedKw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            answerHtml = answerHtml.replace(regex, match => `<span class="highlight">${match}</span>`);
+          }
+        }
+        answerContent.innerHTML = answerHtml || '<span style="color:#aaa;">（空回答）</span>';
+        ansDiv.innerHTML = `<span class="answer-label"><i class="far fa-comment"></i> 回答</span> `;
+        ansDiv.appendChild(answerContent);
 
         const footer = document.createElement('div');
         footer.className = 'qa-footer';
@@ -985,53 +1183,124 @@
           }
         });
 
-        // 编辑回答
+        // 编辑回答（使用富文本编辑器）
         const editBtn = div.querySelector('.edit-btn');
         editBtn.addEventListener('click', function(e) {
           e.stopPropagation();
-          const answerDiv = div.querySelector('.answer-text');
-          const currentAnswer = item.answer;
-          const textarea = document.createElement('textarea');
-          textarea.value = currentAnswer;
-          textarea.rows = 2;
-          textarea.style.cssText = 'width:100%; margin-top:6px; border-radius:16px; padding:10px 14px; border:1px solid #b8cee6; font-family:inherit;';
-          answerDiv.innerHTML = '';
-          answerDiv.appendChild(textarea);
-          textarea.focus();
+          const answerDiv = div.querySelector('.qa-answer');
+          const currentHtml = item.answer || '';
 
-          const saveBtn = document.createElement('button');
-          saveBtn.className = 'btn btn-primary';
-          saveBtn.style.marginTop = '8px';
-          saveBtn.innerHTML = '<i class="fas fa-check"></i> 保存回答';
-          answerDiv.appendChild(saveBtn);
+          // 保存原有内容
+          const oldContent = answerDiv.innerHTML;
+
+          // 替换为编辑器
+          const editorWrapper = document.createElement('div');
+          editorWrapper.style.width = '100%';
+
+          // 工具栏
+          const toolbar = document.createElement('div');
+          toolbar.className = 'editor-toolbar';
+          toolbar.innerHTML = `
+            <button type="button" data-cmd="bold"><b>B</b></button>
+            <button type="button" data-cmd="italic"><i>I</i></button>
+            <button type="button" data-cmd="underline"><u>U</u></button>
+            <span class="separator"></span>
+            <select class="edit-font-size">
+              <option value="3">正常</option>
+              <option value="4">大</option>
+              <option value="5">更大</option>
+              <option value="6">最大</option>
+              <option value="1">极小</option>
+              <option value="2">小</option>
+            </select>
+            <span class="separator"></span>
+            <input type="color" class="edit-color" value="#1d3857">
+            <span class="separator"></span>
+            <button type="button" data-cmd="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+            <button type="button" data-cmd="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+            <span class="separator"></span>
+            <button type="button" data-cmd="indent"><i class="fas fa-indent"></i></button>
+            <button type="button" data-cmd="outdent"><i class="fas fa-outdent"></i></button>
+            <span class="separator"></span>
+            <button type="button" data-cmd="removeFormat"><i class="fas fa-eraser"></i></button>
+          `;
+          editorWrapper.appendChild(toolbar);
+
+          // 编辑器
+          const editor = document.createElement('div');
+          editor.className = 'qa-answer-editor';
+          editor.contentEditable = true;
+          editor.innerHTML = currentHtml || '<p><br></p>';
+          editorWrapper.appendChild(editor);
+
+          // 按钮组
+          const btnGroup = document.createElement('div');
+          btnGroup.style.cssText = 'margin-top:10px;display:flex;gap:10px;';
+          const saveEditBtn = document.createElement('button');
+          saveEditBtn.className = 'btn btn-primary';
+          saveEditBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
           const cancelEditBtn = document.createElement('button');
           cancelEditBtn.className = 'btn btn-outline';
-          cancelEditBtn.style.marginTop = '8px';
-          cancelEditBtn.style.marginLeft = '10px';
           cancelEditBtn.innerHTML = '取消';
-          answerDiv.appendChild(cancelEditBtn);
+          btnGroup.appendChild(saveEditBtn);
+          btnGroup.appendChild(cancelEditBtn);
+          editorWrapper.appendChild(btnGroup);
 
-          const saveHandler = function() {
-            const newAns = textarea.value.trim();
-            if (newAns) {
-              item.answer = newAns;
-              item.time = formatTime(new Date());
-              lastEditTime = new Date();
-              updateLastSaved();
-              renderQaList();
-              renderTabs();
-              renderImportanceTabs();
-              saveData();
-            } else {
-              alert('回答不能为空');
+          // 替换内容
+          answerDiv.innerHTML = '';
+          answerDiv.appendChild(editorWrapper);
+
+          // 编辑器聚焦
+          setTimeout(() => editor.focus(), 50);
+
+          // 工具栏命令
+          toolbar.querySelectorAll('[data-cmd]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+              e.preventDefault();
+              document.execCommand(this.dataset.cmd, false, null);
+              editor.focus();
+            });
+          });
+
+          toolbar.querySelector('.edit-font-size').addEventListener('change', function() {
+            document.execCommand('fontSize', false, this.value);
+            this.value = '3';
+            editor.focus();
+          });
+
+          toolbar.querySelector('.edit-color').addEventListener('input', function() {
+            document.execCommand('foreColor', false, this.value);
+            editor.focus();
+          });
+
+          // 回车键
+          editor.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+              document.execCommand('insertParagraph', false, null);
+              e.preventDefault();
             }
-          };
-          saveBtn.addEventListener('click', saveHandler);
-          cancelEditBtn.addEventListener('click', function() { renderQaList(); });
-          textarea.addEventListener('keydown', function(ev) {
-            if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
-              saveHandler();
+          });
+
+          // 保存
+          saveEditBtn.addEventListener('click', function() {
+            const newHtml = editor.innerHTML.trim();
+            if (!newHtml || newHtml === '<p><br></p>' || newHtml === '<br>') {
+              alert('回答内容不能为空');
+              return;
             }
+            item.answer = newHtml;
+            item.time = formatTime(new Date());
+            lastEditTime = new Date();
+            updateLastSaved();
+            renderQaList();
+            renderTabs();
+            renderImportanceTabs();
+            saveData();
+          });
+
+          // 取消
+          cancelEditBtn.addEventListener('click', function() {
+            answerDiv.innerHTML = oldContent;
           });
         });
 
@@ -1058,16 +1327,15 @@
     });
 
     // ============================================================
-    //  新增问答
+    //  新增问答（使用富文本编辑器）
     // ============================================================
     function addNewQA() {
       const q = newQuestion.value.trim();
-      const a = newAnswer.value.trim();
+      const a = newAnswerEditor.innerHTML.trim();
       const cat = newCategorySelect.value || '默认';
-      if (!q || !a) {
-        alert('问题和回答都不能为空');
-        return;
-      }
+      if (!q) { alert('问题不能为空'); return; }
+      if (!a || a === '<p><br></p>' || a === '<br>') { alert('回答内容不能为空'); return; }
+
       const newItem = {
         id: nextId++,
         question: q,
@@ -1082,7 +1350,7 @@
       lastEditTime = new Date();
       updateLastSaved();
       newQuestion.value = '';
-      newAnswer.value = '';
+      newAnswerEditor.innerHTML = '<p><br></p>';
       renderTabs();
       renderQaList();
       renderImportanceTabs();
@@ -1095,6 +1363,7 @@
       addRow.classList.remove('hidden');
       newQuestion.focus();
       populateCategorySelect();
+      newAnswerEditor.innerHTML = '<p><br></p>';
     }
 
     // ============================================================
@@ -1105,9 +1374,9 @@
         alert('没有问答可以导出');
         return;
       }
-      let htmlContent = `<html><head><meta charset="UTF-8"><title>问答导出</title><style>body { font-family: 'Segoe UI', Arial, sans-serif; padding:30px; } .qa { margin-bottom: 24px; border-bottom:1px solid #ddd; padding-bottom:18px; } .q { font-weight:bold; font-size:18px; } .a { margin: 8px 0 6px 20px; } .meta { color: #4a6a8a; font-size:14px; } .cat { background: #eef3f9; padding:2px 14px; border-radius:20px; } </style></head><body><h1>📋 问答知识库 导出</h1><p>导出时间: ${formatTime(new Date())}</p>`;
+      let htmlContent = `<html><head><meta charset="UTF-8"><title>问答导出</title><style>body{font-family:'Segoe UI',Arial,sans-serif;padding:30px;}.qa{margin-bottom:30px;border-bottom:1px solid #ddd;padding-bottom:20px;}.q{font-weight:bold;font-size:20px;margin-bottom:8px;}.a{margin:8px 0 6px 20px;line-height:1.8;}.meta{color:#4a6a8a;font-size:14px;margin-top:6px;}.cat{background:#eef3f9;padding:2px 14px;border-radius:20px;}ul,ol{padding-left:24px;}blockquote{border-left:4px solid #2a7de1;padding-left:16px;color:#4a6a8a;}</style></head><body><h1>📋 问答知识库 导出</h1><p>导出时间: ${formatTime(new Date())}</p>`;
       qaData.forEach(item => {
-        htmlContent += `<div class="qa"><div class="q">❓ ${escapeHtml(item.question)}</div><div class="a">💬 ${escapeHtml(item.answer)}</div><div class="meta">分类: <span class="cat">${escapeHtml(item.category)}</span>  ·  重要性: ${item.importance}  ·  更新: ${item.time}</div></div>`;
+        htmlContent += `<div class="qa"><div class="q">❓ ${escapeHtml(item.question)}</div><div class="a">💬 ${item.answer || ''}</div><div class="meta">分类: <span class="cat">${escapeHtml(item.category)}</span>  ·  重要性: ${item.importance}  ·  更新: ${item.time}</div></div>`;
       });
       htmlContent += '</body></html>';
       const blob = new Blob([htmlContent], { type: 'application/msword' });
@@ -1160,14 +1429,17 @@
     cancelAddBtn.addEventListener('click', function() {
       addRow.classList.add('hidden');
       newQuestion.value = '';
-      newAnswer.value = '';
+      newAnswerEditor.innerHTML = '<p><br></p>';
     });
     confirmAddBtn.addEventListener('click', addNewQA);
     exportBtn.addEventListener('click', exportWord);
     clearAllBtn.addEventListener('click', clearAll);
     restoreBtn.addEventListener('click', restoreSampleData);
-    newAnswer.addEventListener('keydown', function(e) {
+
+    // 键盘快捷键：Ctrl+Enter 提交
+    newAnswerEditor.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
         addNewQA();
       }
     });
@@ -1176,6 +1448,7 @@
     //  启动
     // ============================================================
     initData();
+    setupEditorToolbar();
     renderAll();
     addRow.classList.add('hidden');
   })();
