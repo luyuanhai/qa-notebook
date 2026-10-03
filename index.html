@@ -1130,6 +1130,39 @@
             background: #2a7de1;
         }
 
+        /* 对齐参考线：拖 / 缩放图片时自动出现，靠近就吸附（可在工具条关掉） */
+        .qa-snap-layer {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 0;
+            height: 0;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        .qa-snap-guide {
+            position: fixed;
+            background: #ff2d78;
+            box-shadow: 0 0 0 1px rgba(255, 45, 120, 0.22);
+            pointer-events: none;
+        }
+        .qa-snap-guide.v { width: 1px; }
+        .qa-snap-guide.h { height: 1px; }
+        /* 线的两端各点一个小圆头，跟「插入位置指示线」区分开 */
+        .qa-snap-guide::before,
+        .qa-snap-guide::after {
+            content: '';
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #ff2d78;
+        }
+        .qa-snap-guide.v::before { left: -2px; top: -2px; }
+        .qa-snap-guide.v::after  { left: -2px; bottom: -2px; }
+        .qa-snap-guide.h::before { top: -2px; left: -2px; }
+        .qa-snap-guide.h::after  { top: -2px; right: -2px; }
+
         /* 图片选中浮层（缩放手柄 + 工具条） */
         .img-resize-box {
             position: absolute;
@@ -2598,6 +2631,7 @@
             };
 
             function clearImageUI() {
+                clearGuides();     // 收起参考线，别留下一条悬空的红线
                 if (imageUI.img && imageUI.img.classList) imageUI.img.classList.remove('img-selected');
                 if (imageUI.box && imageUI.box.parentNode) imageUI.box.parentNode.removeChild(imageUI.box);
                 if (imageUI.reposition) {
@@ -2741,6 +2775,7 @@
                      ${IMG_LAYOUTS.map(l => `<button type="button" class="img-tb-btn" data-act="${l.act}" title="${l.title}">${ICON[l.icon]}</button>`).join('')}
                      <button type="button" class="img-tb-btn" data-act="origin" title="原始尺寸"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6.2V2.2h4M14 9.8v4h-4M14 6.2v-4h-4M2 9.8v4h4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                      <button type="button" class="img-tb-btn" data-act="ratio" title="恢复原始比例（拉变形后一键还原）">${ICON.ratio}</button>
+                     <button type="button" class="img-tb-btn" data-act="snap" title="对齐吸附：拖动 / 缩放时自动贴参考线">${ICON.snap}</button>
                      <button type="button" class="img-tb-btn img-tb-del" data-act="del" title="删除图片"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 4.6h10.8M6 4.6V2.9h4v1.7M4.1 4.6l.8 8.5h6.2l.8-8.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
                 box.appendChild(toolbar);
 
@@ -2798,6 +2833,10 @@
                         positionImageUI();
                         saveFreeLayout(imageUI.img, imageUI.editor);
                         syncFreeHeight(imageUI.editor);
+                    } else if (act === 'snap') {
+                        // 对齐吸附开关（记在 localStorage，下次打开还在）
+                        setSnapEnabled(!isSnapEnabled());
+                        if (!isSnapEnabled()) clearGuides();
                     } else if (act === 'free') {
                         // 自由漫游 ⇄ 回归文档流
                         toggleImageFree(imageUI.img, imageUI.editor);
@@ -2816,6 +2855,238 @@
                 window.addEventListener('resize', imageUI.reposition);
 
                 positionImageUI();
+                updateSnapButton();     // 对齐吸附开关的亮/灭状态
+            }
+
+            // ============================================================
+            //  【对齐参考线 + 吸附】
+            //  两张图并排时自动出现参考线：竖线比「左 / 中线 / 右」，横线比「上 / 中线 / 下」，
+            //  距离在 6px 内就吸上去（拖动=整体平移，缩放=只有被拖的那条边动）。
+            //  参照物 = 同一容器里的其他图片 + 容器自己的内容框（左/中/右、上/下）。
+            //  开关存在 localStorage，点工具条的「对齐」按钮可随时关掉。
+            // ============================================================
+            const SNAP_TOL = 6;                    // 吸附半径（px）
+            const SNAP_STORE_KEY = 'qa_img_snap';
+            let snapLayer = null;
+
+            function isSnapEnabled() {
+                try { return localStorage.getItem(SNAP_STORE_KEY) !== '0'; } catch (e) { return true; }
+            }
+            function setSnapEnabled(on) {
+                try { localStorage.setItem(SNAP_STORE_KEY, on ? '1' : '0'); } catch (e) { /* 隐私模式忽略 */ }
+                updateSnapButton();
+            }
+            function updateSnapButton() {
+                if (!imageUI.toolbar) return;
+                const b = imageUI.toolbar.querySelector('[data-act="snap"]');
+                if (!b) return;
+                const on = isSnapEnabled();
+                b.classList.toggle('active', on);
+                b.title = on ? '对齐吸附：已开启（点一下关闭）' : '对齐吸附：已关闭（点一下开启）';
+            }
+
+            function ensureSnapLayer() {
+                if (snapLayer && snapLayer.isConnected) return snapLayer;
+                snapLayer = document.createElement('div');
+                snapLayer.className = 'qa-snap-layer';
+                document.body.appendChild(snapLayer);
+                return snapLayer;
+            }
+
+            /** 画参考线。参考线用 fixed 定位（视口坐标），滚动时也不脱节 */
+            function renderGuides(guides) {
+                const layer = ensureSnapLayer();
+                layer.innerHTML = '';
+                if (!guides || !guides.length) return;
+                guides.forEach(function (g) {
+                    const d = document.createElement('div');
+                    d.className = 'qa-snap-guide ' + g.axis;
+                    if (g.axis === 'v') {
+                        d.style.left = Math.round(g.pos) + 'px';
+                        d.style.top = Math.round(g.from) + 'px';
+                        d.style.height = Math.max(2, Math.round(g.to - g.from)) + 'px';
+                    } else {
+                        d.style.top = Math.round(g.pos) + 'px';
+                        d.style.left = Math.round(g.from) + 'px';
+                        d.style.width = Math.max(2, Math.round(g.to - g.from)) + 'px';
+                    }
+                    layer.appendChild(d);
+                });
+            }
+
+            function clearGuides() {
+                if (snapLayer) snapLayer.innerHTML = '';
+            }
+
+            /**
+             * 收集参照物：容器内容框 + 同一容器里的其他图片（跟着文档流走的也算，能拿来对边）。
+             * 全部换成视口坐标，方便直接和被拖/被缩放的那张图比大小。
+             */
+            function collectSnapRefs(container, img) {
+                const refs = [];
+                if (!container) return refs;
+                const cr = container.getBoundingClientRect();
+                if (cr.width > 4) {
+                    const cs = window.getComputedStyle ? window.getComputedStyle(container) : null;
+                    const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+                    const inner = {
+                        left: cr.left + (cs ? num(cs.paddingLeft) + num(cs.borderLeftWidth) : 0),
+                        right: cr.right - (cs ? num(cs.paddingRight) + num(cs.borderRightWidth) : 0),
+                        top: cr.top + (cs ? num(cs.paddingTop) + num(cs.borderTopWidth) : 0),
+                        bottom: cr.bottom - (cs ? num(cs.paddingBottom) + num(cs.borderBottomWidth) : 0)
+                    };
+                    inner.width = inner.right - inner.left;
+                    inner.height = inner.bottom - inner.top;
+                    refs.push({ rect: inner, box: true });
+                }
+                container.querySelectorAll('img').forEach(function (other) {
+                    if (other === img) return;
+                    const r = other.getBoundingClientRect();
+                    if (r.width < 2 || r.height < 2) return;
+                    refs.push({ rect: r, box: false, el: other, free: isFreeImage(other) });
+                });
+                return refs;
+            }
+
+            /** 在一条轴上找最近的对齐线：edges 是本图参与对齐的那几条边 */
+            function bestSnapOnAxis(edges, refs, axis) {
+                let best = null;
+                refs.forEach(function (ref) {
+                    const r = ref.rect;
+                    // 容器只贡献「水平居中」这一条竖线：它的上下边界本来就随文字重排乱动，
+                    // 左右边界又已经有 clamp 兜底，再来吸附只会让人贴不到边
+                    const lines = ref.box
+                        ? (axis === 'x' ? [r.left + r.width / 2] : [])
+                        : (axis === 'x'
+                            ? [r.left, r.left + r.width / 2, r.right]
+                            : [r.top, r.top + r.height / 2, r.bottom]);
+                    lines.forEach(function (lv) {
+                        edges.forEach(function (e) {
+                            const d = lv - e.value;
+                            if (Math.abs(d) > SNAP_TOL) return;
+                            if (!best || Math.abs(d) < Math.abs(best.d)) best = { d: d, line: lv, ref: ref };
+                        });
+                    });
+                });
+                return best;
+            }
+
+            /**
+             * 算吸附偏移与参考线。
+             * @param rect   本图当前视口矩形
+             * @param refs   参照物
+             * @param moveX  'both'=整体左右平移；'left'/'right'=只有这条边会动
+             * @param moveY  同上
+             * @returns {dx, dy, guides}
+             */
+            function computeSnap(rect, refs, moveX, moveY) {
+                const out = { dx: 0, dy: 0, guides: [], hits: [] };
+                if (!isSnapEnabled()) return out;
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                // 线的长度：跟另一张图对齐时贯穿两张图；贴容器边时只画在本图附近，免得太吵
+                const spanOf = ref => ref.box
+                    ? { from: rect.top - 24, to: rect.bottom + 24 }
+                    : { from: Math.min(rect.top, ref.rect.top) - 12, to: Math.max(rect.bottom, ref.rect.bottom) + 12 };
+
+                if (moveX) {
+                    const edges = moveX === 'both'
+                        ? [{ value: rect.left }, { value: cx }, { value: rect.right }]
+                        : [{ value: moveX === 'left' ? rect.left : rect.right }];
+                    const b = bestSnapOnAxis(edges, refs, 'x');
+                    if (b) {
+                        out.dx = b.d;
+                        const s = spanOf(b.ref);
+                        out.guides.push({ axis: 'v', pos: b.line, from: s.from, to: s.to });
+                        if (!b.ref.box) out.hits.push(b.ref);
+                    }
+                }
+                if (moveY) {
+                    const edges = moveY === 'both'
+                        ? [{ value: rect.top }, { value: cy }, { value: rect.bottom }]
+                        : [{ value: moveY === 'top' ? rect.top : rect.bottom }];
+                    const b = bestSnapOnAxis(edges, refs, 'y');
+                    if (b) {
+                        out.dy = b.d;
+                        const s = spanOf(b.ref);
+                        out.guides.push({ axis: 'h', pos: b.line, from: s.from, to: s.to });
+                        if (!b.ref.box) out.hits.push(b.ref);
+                    }
+                }
+                return out;
+            }
+
+            /**
+             * 【对齐为什么会「保存后错位」】
+             * 被贴上去的那张图如果还留在文档流里，它的位置由文字排版决定 —— 编辑态看着严丝合缝，
+             * 一旦保存 / 换个屏宽，它按文字流重排，自由图却按相对坐标等比缩放 → 立刻错开。
+             * 所以：吸附真的生效时，把被对齐的那张图**就地**转成自由图（用当前显示位置换算坐标，
+             * 画面一动不动），两张图就都按相对坐标存了，任何设备都保持并排。
+             * 想让它回到文字流里：选中该图 → 点工具条的「回归文档流」。
+             */
+            function lockAlignedPartners(container, hits) {
+                if (!container || !hits || !hits.length) return;
+                hits.forEach(function (ref) {
+                    const el = ref.el;
+                    if (!el || isFreeImage(el) || !container.contains(el)) return;
+                    makeImageFree(el, container);   // 画面位置不变，只是把坐标固定下来
+                });
+            }
+
+            /** 手柄方位 → 哪条边在动（返回 null 表示该轴不动） */
+            function movingEdgesOf(pos) {
+                return {
+                    x: pos.indexOf('e') > -1 ? 'right' : (pos.indexOf('w') > -1 ? 'left' : null),
+                    y: pos.indexOf('s') > -1 ? 'bottom' : (pos.indexOf('n') > -1 ? 'top' : null)
+                };
+            }
+
+            const clampSize = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+            /**
+             * 拖动时的吸附：先把图片按手指位置落一次、量真实矩形，
+             * 再整体平移到参考线上。被边界夹住时说明没真贴上 —— 这时不画线。
+             * @returns 最终落点 { x, y }（已写进 style）
+             */
+            function snapFreeMove(img, container, x, y, maxX) {
+                const refs = collectSnapRefs(container, img);
+                img.style.left = Math.round(x) + 'px';
+                img.style.top = Math.round(y) + 'px';
+                const snap = computeSnap(img.getBoundingClientRect(), refs, 'both', 'both');
+                const wantX = Math.round(x + snap.dx);
+                const wantY = Math.round(y + snap.dy);
+                const nx = Math.max(0, Math.min(wantX, maxX));
+                const ny = Math.max(0, wantY);
+                img.style.left = nx + 'px';
+                img.style.top = ny + 'px';
+                renderGuides((nx === wantX && ny === wantY) ? snap.guides : []);
+                return { x: nx, y: ny, hits: (nx === wantX && ny === wantY) ? snap.hits : [] };
+            }
+
+            /**
+             * 缩放时的吸附：把「手指算出来的 w/h」先落一次，量真实矩形，
+             * 再按参考线微调被拖的那条边（角手柄保持比例，只挑更近的一个方向吸）。
+             */
+            function snapResize(img, container, pos, corner, ratio, w, h) {
+                const edges = movingEdgesOf(pos);
+                const refs = collectSnapRefs(container, img);
+                const s = computeSnap(img.getBoundingClientRect(), refs, edges.x, edges.y);
+                let nw = w, nh = h;
+                if (corner) {
+                    const useX = s.dx && (!s.dy || Math.abs(s.dx) <= Math.abs(s.dy));
+                    const useY = s.dy && (!useX);
+                    if (useX) { nw = w + s.dx; nh = nw * ratio; s.guides = s.guides.filter(g => g.axis === 'v'); }
+                    else if (useY) { nh = h + s.dy; nw = ratio ? nh / ratio : nw; s.guides = s.guides.filter(g => g.axis === 'h'); }
+                } else {
+                    if (s.dx) nw = edges.x === 'right' ? w + s.dx : w - s.dx;
+                    if (s.dy) nh = edges.y === 'bottom' ? h + s.dy : h - s.dy;
+                }
+                return {
+                    w: clampSize(nw, 24, 4000),
+                    h: clampSize(nh, 16, 8000),
+                    guides: s.guides,
+                    hits: s.hits
+                };
             }
 
             /**
@@ -2842,6 +3113,17 @@
                 const handle = e.currentTarget;
                 try { handle.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
 
+                // 尺寸 + 自由定位补偿写在一起：吸附要先落一次、量到真实矩形后再补一次
+                const applyGeom = (w, h) => {
+                    setImageSize(img, w, h);
+                    if (isFree) {
+                        // 动左边就往右补 left、动上边就往下补 top —— 保证右下角/底边不跑
+                        if (pos.indexOf('w') > -1) img.style.left = Math.round(startLeft + (startW - w)) + 'px';
+                        if (pos.indexOf('n') > -1) img.style.top = Math.round(startTop + (startH - h)) + 'px';
+                    }
+                };
+
+                let lastHits = [];
                 const onMove = ev => {
                     const dx = ev.clientX - startX;
                     const dy = ev.clientY - startY;
@@ -2859,18 +3141,21 @@
                     }
                     w = Math.max(24, Math.min(4000, w));
                     h = Math.max(16, Math.min(8000, h));
-                    setImageSize(img, w, h);
-                    if (isFree) {
-                        // 动左边就往右补 left、动上边就往下补 top —— 保证右下角/底边不跑
-                        if (pos.indexOf('w') > -1) img.style.left = Math.round(startLeft + (startW - w)) + 'px';
-                        if (pos.indexOf('n') > -1) img.style.top = Math.round(startTop + (startH - h)) + 'px';
-                    }
+                    applyGeom(w, h);
+                    // —— 对齐吸附：贴到参考线时，被拖的那条边停在线上 ——
+                    const snapped = snapResize(img, imageUI.editor, pos, corner, ratio, w, h);
+                    if (snapped.w !== w || snapped.h !== h) applyGeom(snapped.w, snapped.h);
+                    renderGuides(snapped.guides);
+                    lastHits = snapped.hits || [];
                     positionImageUI();
                 };
                 const onUp = () => {
                     window.removeEventListener('pointermove', onMove);
                     window.removeEventListener('pointerup', onUp);
                     window.removeEventListener('pointercancel', onUp);
+                    clearGuides();                         // 松手即收线
+                    // 贴到一张还在文档流里的图上 → 把那张也固定住，否则保存后就错开了
+                    lockAlignedPartners(imageUI.editor, lastHits);
                     saveFreeLayout(img, imageUI.editor);   // 落定后回写比例，换设备才保得住形状
                     syncFreeHeight(imageUI.editor);
                 };
@@ -3282,7 +3567,9 @@
                 // 安装引导横幅
                 install: '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" style="vertical-align:-3px;"><rect x="4.4" y="1.6" width="7.2" height="12.8" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7 12.4h2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
                 // 恢复原始比例：一个被斜向拉伸的矩形 + 双向箭头
-                ratio: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="1.6" y="2.6" width="12.8" height="10.8" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M4.6 11.4L11.4 4.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M8.2 4.6h3.2v3.2M7.8 11.4H4.6V8.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                ratio: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="1.6" y="2.6" width="12.8" height="10.8" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M4.6 11.4L11.4 4.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M8.2 4.6h3.2v3.2M7.8 11.4H4.6V8.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                // 对齐吸附：中间一条虚参考线，两边各一块（并排的两张图）
+                snap: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 1.4v13.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 2"/><rect x="1.2" y="4.3" width="4.6" height="7.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.25"/><rect x="10.2" y="4.3" width="4.6" height="7.4" rx="1" fill="none" stroke="currentColor" stroke-width="1.25"/></svg>'
             };
 
             // 图片排版模式：class 名 ↔ 工具条按钮
@@ -3518,6 +3805,7 @@
                 const startX = e.clientX;
                 const startY = e.clientY;
                 let moved = false;
+                let lastHits = [];
 
                 const onMove = ev => {
                     if (!moved) {
@@ -3532,8 +3820,8 @@
                     const maxX = Math.max(0, container.clientWidth - img.offsetWidth);
                     const x = Math.max(0, Math.min(p.x - offX, maxX));
                     const y = Math.max(0, p.y - offY);
-                    img.style.left = Math.round(x) + 'px';
-                    img.style.top = Math.round(y) + 'px';
+                    // —— 对齐吸附：先按手指落位，量到真实矩形后再往参考线上贴 ——
+                    lastHits = snapFreeMove(img, container, x, y, maxX).hits || [];
                     syncFreeHeight(container);
                     if (imageUI.img === img) positionImageUI();
                 };
@@ -3542,6 +3830,10 @@
                     window.removeEventListener('pointermove', onMove);
                     window.removeEventListener('pointerup', onUp);
                     window.removeEventListener('pointercancel', onUp);
+                    clearGuides();                       // 松手即收线
+                    // 贴到一张还在文档流里的图上 → 把那张也固定住（画面不动），
+                    // 否则保存后它按文字流重排，编辑时的并排就没了
+                    if (moved) lockAlignedPartners(container, lastHits);
                     img.classList.remove('img-free-moving');
                     saveFreeLayout(img, container);   // 落定后回写相对坐标
                     syncFreeHeight(container);
