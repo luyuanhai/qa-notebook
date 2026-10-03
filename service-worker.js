@@ -15,8 +15,17 @@
  *
  * 改了文件内容后，把 CACHE_VERSION 加一（v2 → v3），否则老用户可能还吃旧缓存。
  */
-const CACHE_VERSION = 'qa-notebook-v2';
-const CORE_ASSETS = ['./', './index.html', './manifest.json'];
+const CACHE_VERSION = 'qa-notebook-v3';
+const CORE_ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png',
+  './favicon-32.png'
+];
 
 /* ---------- 安装：预缓存核心文件 ---------- */
 self.addEventListener('install', function (event) {

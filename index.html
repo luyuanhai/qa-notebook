@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="问答本">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <style>
         * {
             margin: 0;
@@ -154,9 +155,20 @@
             border-color: #2a7de1;
             box-shadow: 0 0 0 3px rgba(42, 125, 225, 0.12);
         }
-        .search-box i {
+        .search-box i,
+        .search-box .search-ic {
             color: #4a709b;
             font-size: 14px;
+        }
+        .search-box .search-ic {
+            width: 15px;
+            height: 15px;
+            flex: none;
+        }
+        /* 图标已全部改成内联 SVG（离线也可见），统一防止被 flex 压缩 */
+        .btn svg,
+        .search-box svg {
+            flex: none;
         }
         .search-box input {
             border: none;
@@ -325,8 +337,10 @@
             background: white;
             color: #2a4b73;
         }
-        .imp-tab i {
+        .imp-tab i,
+        .imp-tab svg {
             font-size: 13px;
+            flex: none;
         }
         .imp-tab .badge {
             background: rgba(0, 0, 0, 0.06);
@@ -388,7 +402,8 @@
             border-color: #1a5bbf;
             color: white;
         }
-        .imp-tab[data-imp="全部"].active i {
+        .imp-tab[data-imp="全部"].active i,
+        .imp-tab[data-imp="全部"].active svg {
             color: white;
         }
         .imp-tab[data-imp="全部"] .badge {
@@ -984,42 +999,10 @@
         }
 
         /* ============================================================
-           兜底：Font Awesome CDN 加载失败（断网 / 被拦）时用 emoji 顶上
+           图标策略（v3 起）：全部改成内联 SVG，不再依赖 Font Awesome CDN
+           —— 装成 App 后断网也能正常显示，也不会再出现「图标是空白方块」。
+           原先的 body.icons-missing emoji 兜底已随之删除。
            ============================================================ */
-        body.icons-missing .fas::before,
-        body.icons-missing .far::before,
-        body.icons-missing .fab::before {
-            font-family: "Segoe UI Emoji", "Apple Color Emoji", "Segoe UI Symbol", system-ui, sans-serif;
-            font-style: normal;
-            font-weight: normal;
-        }
-        body.icons-missing i.fa-comment-dots::before,
-        body.icons-missing i.fa-comment::before { content: "\1F4AC"; }
-        body.icons-missing i.fa-clock::before { content: "\1F552"; }
-        body.icons-missing i.fa-plus-circle::before { content: "\2795"; }
-        body.icons-missing i.fa-file-word::before { content: "\1F4C4"; }
-        body.icons-missing i.fa-download::before { content: "\2B07"; }
-        body.icons-missing i.fa-upload::before { content: "\2B06"; }
-        body.icons-missing i.fa-trash-alt::before,
-        body.icons-missing i.fa-trash::before { content: "\1F5D1"; }
-        body.icons-missing i.fa-times-circle::before,
-        body.icons-missing i.fa-times::before { content: "\2715"; }
-        body.icons-missing i.fa-search::before { content: "\1F50D"; }
-        body.icons-missing i.fa-list::before { content: "\2630"; }
-        body.icons-missing i.fa-exclamation-circle::before { content: "\2757"; }
-        body.icons-missing i.fa-circle::before { content: "\25CF"; }
-        body.icons-missing i.fa-star::before { content: "\2605"; }
-        body.icons-missing i.fa-pen::before { content: "\270E"; }
-        body.icons-missing i.fa-question-circle::before { content: "\2753"; }
-        body.icons-missing i.fa-tag::before { content: "\1F3F7"; }
-        body.icons-missing i.fa-inbox::before { content: "\1F4E5"; }
-        body.icons-missing i.fa-calendar-alt::before,
-        body.icons-missing i.fa-calendar::before { content: "\1F4C5"; }
-        body.icons-missing i.fa-expand::before { content: "\2922"; }
-        body.icons-missing i.fa-image::before { content: "\1F5BC"; }
-        body.icons-missing i.fa-eraser::before { content: "\232B"; }
-        body.icons-missing i.fa-indent::before { content: "\21E5"; }
-        body.icons-missing i.fa-outdent::before { content: "\21E4"; }
 
         /* ============================================================
            【新增】图片支持：插入 / 自由缩放 / 删除 / 多图 / 拖拽换位
@@ -1540,6 +1523,7 @@
             color: #dfe9f5;
         }
         html[data-theme="dark"] .search-box i,
+        html[data-theme="dark"] .search-box .search-ic,
         html[data-theme="dark"] .search-clear {
             color: #8aa4c0;
         }
@@ -1888,22 +1872,145 @@
             background: #432727;
             border-color: #6b3a35;
         }
+
+        /* ============================================================
+           「装成 App」引导条（手机 / 可安装的浏览器才出现）
+           ============================================================ */
+        /* 引导条是浮在页面上的，显示时给 body 留出底部空间，免得压住最后一张卡片 */
+        body.install-hint-on {
+            padding-bottom: 120px;
+        }
+        @media (max-width: 560px) {
+            body.install-hint-on {
+                padding-bottom: 165px;
+            }
+        }
+        .install-bar {
+            position: fixed;
+            left: 50%;
+            bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+            transform: translateX(-50%);
+            z-index: 950;
+            width: min(700px, calc(100% - 32px));
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 12px 11px 14px;
+            background: #ffffff;
+            border: 1px solid #cfe0f4;
+            border-radius: 15px;
+            box-shadow: 0 12px 32px rgba(18, 46, 84, 0.18);
+            color: #1f3a5f;
+            font-size: 13px;
+        }
+        /* 注：全局 .hidden 是 display:none !important，能盖住上面的 display:flex */
+
+        .install-bar .ib-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+        .install-bar .ib-ic {
+            display: flex;
+            flex: none;
+            color: #1a5bbf;
+        }
+        .install-bar .ib-txt {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+        .install-bar .ib-txt strong {
+            font-size: 13.5px;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+        .install-bar .ib-txt span {
+            color: #5a7290;
+            font-size: 12px;
+            line-height: 1.55;
+        }
+        .install-bar .ib-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: none;
+        }
+        .install-bar .btn {
+            padding: 7px 14px;
+            font-size: 13px;
+        }
+        .install-bar .ib-close {
+            background: none;
+            border: none;
+            color: #8ba0b8;
+            font-size: 20px;
+            line-height: 1;
+            padding: 4px 8px;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .install-bar .ib-close:hover {
+            color: #1a5bbf;
+            background: #eef4fc;
+        }
+
+        html[data-theme="dark"] .install-bar {
+            background: #1b2430;
+            border-color: #33455c;
+            color: #dbe6f2;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+        }
+        html[data-theme="dark"] .install-bar .ib-ic {
+            color: #8fb4dc;
+        }
+        html[data-theme="dark"] .install-bar .ib-txt span {
+            color: #93a8bf;
+        }
+        html[data-theme="dark"] .install-bar .ib-close {
+            color: #7d92aa;
+        }
+        html[data-theme="dark"] .install-bar .ib-close:hover {
+            color: #8fb4dc;
+            background: #26323f;
+        }
+
+        /* 小屏：改成上下两行，文字不再被挤成一条 */
+        @media (max-width: 560px) {
+            .install-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                bottom: 10px;
+                width: calc(100% - 20px);
+            }
+            .install-bar .ib-actions {
+                justify-content: flex-end;
+            }
+            .install-bar .ib-actions .btn {
+                flex: 1;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="app-container" id="app">
         <header style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-            <h1><i class="fas fa-comment-dots"></i> 问答知识库</h1>
-            <div class="last-saved" id="lastSavedDisplay"><i class="far fa-clock"></i> 最新编辑: <span id="lastSavedTime">--</span></div>
+            <h1><svg viewBox="0 0 16 16" aria-hidden="true" style="width:26px;height:26px;vertical-align:-4px;color:#2a7de1;"><path d="M1.6 3.2h12.8v7.6H7.2L3.2 14.2v-3.4H1.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M4.6 6.2h6.8M4.6 8.7h4.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> 问答知识库</h1>
+            <div class="last-saved" id="lastSavedDisplay"><svg viewBox="0 0 16 16" aria-hidden="true" style="width:13px;height:13px;vertical-align:-2px;"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.35"/><path d="M8 4.4V8l2.4 1.5" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg> 最新编辑: <span id="lastSavedTime">--</span></div>
         </header>
 
         <div class="toolbar">
             <div class="left-actions">
-                <button class="btn btn-primary" id="addQaBtn"><i class="fas fa-plus-circle"></i> 新增问答</button>
-                <button class="btn btn-outline" id="exportWordBtn"><i class="fas fa-file-word"></i> 导出Word</button>
-                <button class="btn btn-outline" id="exportCacheBtn"><i class="fas fa-download"></i> 导出缓存</button>
-                <button class="btn btn-outline" id="importCacheBtn"><i class="fas fa-upload"></i> 导入缓存</button>
-                <button class="btn btn-outline" id="clearAllBtn"><i class="fas fa-trash-alt"></i> 清空全部</button>
+                <button class="btn btn-primary" id="addQaBtn"><svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.35"/><path d="M8 4.9v6.2M4.9 8h6.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> 新增问答</button>
+                <button class="btn btn-outline" id="exportWordBtn"><svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M2.2 2.6h7.4L13.8 7v6.4H2.2z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M9.6 2.6V7h4.2" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M4.4 8.6l1 3.4 1.2-2.4 1.2 2.4 1-3.4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> 导出Word</button>
+                <button class="btn btn-outline" id="exportCacheBtn"><svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M8 1.8v8.4M4.9 7.1L8 10.2l3.1-3.1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.2 11.4v2.8h11.6v-2.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> 导出缓存</button>
+                <button class="btn btn-outline" id="importCacheBtn"><svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M8 10.4V2M4.9 5.1L8 2l3.1 3.1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.2 11.4v2.8h11.6v-2.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> 导入缓存</button>
+                <button class="btn btn-outline" id="clearAllBtn"><svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M2.6 4.6h10.8M6 4.6V2.9h4v1.7M4.1 4.6l.8 8.5h6.2l.8-8.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg> 清空全部</button>
                 <button class="btn btn-outline" id="batchSelectBtn" title="进入批量选择模式：可勾选多条，统一改分类或导出">
                     <svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><rect x="1.5" y="2.4" width="13" height="11.2" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M4.4 8.2l2.3 2.3 4.9-5.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     批量选择
@@ -1919,7 +2026,7 @@
                     云同步
                 </button>
                 <div class="search-box">
-                    <i class="fas fa-search"></i>
+                    <svg viewBox="0 0 16 16" aria-hidden="true" class="search-ic"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.4 10.4l3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                     <input type="text" id="searchInput" placeholder="搜索问答..." />
                     <button class="search-clear" id="searchClear" title="清空搜索"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.35"/><path d="M5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg></button>
                 </div>
@@ -2019,13 +2126,30 @@
                 <div class="qa-answer-editor" id="newAnswerEditor" contenteditable="true" placeholder="回答内容…"></div>
             </div>
             <div class="btn-row">
-                <button class="btn btn-primary" id="confirmAddBtn"><i class="fas fa-check"></i> 添加</button>
+                <button class="btn btn-primary" id="confirmAddBtn"><svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M2.6 8.3l3.7 3.7 7.1-8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> 添加</button>
                 <button class="btn btn-outline" id="cancelAddBtn">取消</button>
             </div>
         </div>
 
         <!-- 隐藏的文件输入，用于导入缓存 -->
         <input type="file" id="importFileInput" accept=".json" style="display:none;">
+    </div>
+
+    <!-- 「装成 App」引导条：只在手机 / 可安装的浏览器上出现，关掉后 7 天不再打扰 -->
+    <div class="install-bar hidden" id="installBar" role="status">
+        <div class="ib-main">
+            <span class="ib-ic" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="22" height="22"><rect x="4.4" y="1.6" width="7.2" height="12.8" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7 12.4h2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </span>
+            <div class="ib-txt">
+                <strong id="installTitle">装成 App，用起来更顺手</strong>
+                <span id="installDesc">主屏幕多一个图标，打开即全屏，断网也能查。</span>
+            </div>
+        </div>
+        <div class="ib-actions">
+            <button class="btn btn-primary hidden" id="installGoBtn">立即安装</button>
+            <button class="ib-close" id="installHideBtn" title="以后再说" aria-label="以后再说">×</button>
+        </div>
     </div>
 
     <script>
@@ -2682,7 +2806,7 @@
                     lb.id = 'imgLightbox';
                     lb.className = 'img-lightbox';
                     lb.innerHTML =
-                        `<button class="lb-close" title="关闭"><i class="fas fa-times"></i></button>
+                        `<button class="lb-close" title="关闭">${ICON.close}</button>
                          <img alt="预览">
                          <div class="lb-tip">点击任意处或按 Esc 关闭</div>`;
                     lb.addEventListener('click', closeLightbox);
@@ -2900,7 +3024,18 @@
                 question: '<svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><circle cx="8" cy="8" r="6.8" fill="none" stroke="currentColor" stroke-width="1.35"/><path d="M6.1 6.2a1.95 1.95 0 1 1 2.7 1.8c-.6.25-.9.8-.9 1.4v.4" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><circle cx="8.05" cy="11.7" r=".85" fill="currentColor"/></svg>',
                 comment: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M1.6 3.4h12.8v7.2H7.4L3.4 14V10.6H1.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
                 tag: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8.6 1.6H14v5.4l-7 7-5.4-5.4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="11.2" cy="4.8" r="1" fill="currentColor"/></svg>',
-                inbox: '<svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true" style="display:block;margin:0 auto 12px;opacity:.5;"><path d="M1.6 9.4L3.9 2.4h8.2l2.3 7v4.2H1.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M1.6 9.4h3.6l1 1.8h4.6l1-1.8h3.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>'
+                inbox: '<svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true" style="display:block;margin:0 auto 12px;opacity:.5;"><path d="M1.6 9.4L3.9 2.4h8.2l2.3 7v4.2H1.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M1.6 9.4h3.6l1 1.8h4.6l1-1.8h3.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+                // 其余从 Font Awesome 换成内联 SVG 的图标（离线也能显示）
+                check: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;"><path d="M2.6 8.3l3.7 3.7 7.1-8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                plusCircle: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.35"/><path d="M8 4.9v6.2M4.9 8h6.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+                calendar: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" style="vertical-align:-2px;"><rect x="1.6" y="3" width="12.8" height="11" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M1.6 6.4h12.8M5.2 1.8v2.4M10.8 1.8v2.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+                close: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.6 3.6l8.8 8.8M12.4 3.6l-8.8 8.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+                exclaim: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.35"/><path d="M8 4.6v4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="11.4" r=".9" fill="currentColor"/></svg>',
+                dot: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.45"/></svg>',
+                star: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 1.7l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.5l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>',
+                list: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2.4 4h11.2M2.4 8h11.2M2.4 12h11.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+                // 安装引导横幅
+                install: '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" style="vertical-align:-3px;"><rect x="4.4" y="1.6" width="7.2" height="12.8" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7 12.4h2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
             };
 
             // 图片排版模式：class 名 ↔ 工具条按钮
@@ -3438,10 +3573,10 @@
             function renderImportanceTabs() {
                 const fragment = document.createDocumentFragment();
                 const impTypes = [
-                    { key: '全部', label: '全部', icon: 'fa-list' },
-                    { key: 'important', label: '重要', icon: 'fa-exclamation-circle' },
-                    { key: 'normal', label: '一般', icon: 'fa-circle' },
-                    { key: 'favorite', label: '收藏', icon: 'fa-star' },
+                    { key: '全部', label: '全部', icon: ICON.list },
+                    { key: 'important', label: '重要', icon: ICON.exclaim },
+                    { key: 'normal', label: '一般', icon: ICON.dot },
+                    { key: 'favorite', label: '收藏', icon: ICON.star },
                 ];
                 impTypes.forEach(type => {
                     const tab = document.createElement('button');
@@ -3450,7 +3585,7 @@
                     const count = type.key === '全部' ? qaData.length : qaData.filter(item => item.importance === type
                         .key).length;
                     tab.innerHTML =
-                        `<i class="fas ${type.icon}"></i> ${type.label} <span class="badge">${count}</span>`;
+                        `${type.icon}${type.label} <span class="badge">${count}</span>`;
                     tab.addEventListener('click', function() {
                         currentImportance = this.dataset.imp;
                         resetPage();                 // 换了筛选条件，回到第 1 页
@@ -3516,7 +3651,7 @@
 
                 const addCatBtn = document.createElement('button');
                 addCatBtn.className = 'add-category-btn';
-                addCatBtn.innerHTML = '<i class="fas fa-plus-circle"></i> 新建分类';
+                addCatBtn.innerHTML = ICON.plusCircle + ' 新建分类';
                 addCatBtn.addEventListener('click', function() {
                     const newCat = prompt('请输入新分类名称:');
                     if (newCat && newCat.trim() !== '' && !categories.includes(newCat.trim())) {
@@ -3744,7 +3879,7 @@
 
                     const meta = document.createElement('div');
                     meta.className = 'qa-meta';
-                    meta.innerHTML = `<span class="time"><i class="far fa-calendar-alt"></i> ${item.time || '--'}</span>
+                    meta.innerHTML = `<span class="time">${ICON.calendar} ${item.time || '--'}</span>
                           <span class="qa-actions">
                             <button class="edit-q-btn" title="编辑问题标题（也可双击标题）">${ICON.penTitle}<span>改问题</span></button>
                             <button class="edit-btn" title="编辑回答内容">${ICON.pen}<span>编辑回答</span></button>
@@ -3772,14 +3907,14 @@
                     badgeGroup.className = 'badge-group';
 
                     const types = [
-                        { key: 'important', label: '重要', icon: 'fas fa-exclamation-circle' },
-                        { key: 'normal', label: '一般', icon: 'fas fa-circle' },
-                        { key: 'favorite', label: '收藏', icon: 'fas fa-star' },
+                        { key: 'important', label: '重要', icon: ICON.exclaim },
+                        { key: 'normal', label: '一般', icon: ICON.dot },
+                        { key: 'favorite', label: '收藏', icon: ICON.star },
                     ];
                     types.forEach(type => {
                         const span = document.createElement('span');
                         span.className = `badge-icon ${type.key}${item.importance === type.key ? ' active' : ''}`;
-                        span.innerHTML = `<i class="${type.icon}"></i> ${type.label}`;
+                        span.innerHTML = `${type.icon}${type.label}`;
                         span.addEventListener('click', function(e) {
                             e.stopPropagation();
                             item.importance = (item.importance === type.key) ? 'normal' : type.key;
@@ -3863,7 +3998,7 @@
                         input.placeholder = '问题标题';
                         const okBtn = document.createElement('button');
                         okBtn.className = 'btn btn-primary';
-                        okBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
+                        okBtn.innerHTML = ICON.check + ' 保存';
                         const cancelBtn = document.createElement('button');
                         cancelBtn.className = 'btn btn-outline';
                         cancelBtn.textContent = '取消';
@@ -3941,7 +4076,7 @@
                         btnGroup.style.cssText = 'margin-top:10px;display:flex;gap:10px;';
                         const saveEditBtn = document.createElement('button');
                         saveEditBtn.className = 'btn btn-primary';
-                        saveEditBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
+                        saveEditBtn.innerHTML = ICON.check + ' 保存';
                         const cancelEditBtn = document.createElement('button');
                         cancelEditBtn.className = 'btn btn-outline';
                         cancelEditBtn.innerHTML = '取消';
@@ -4757,27 +4892,6 @@
             });
 
             // ============================================================
-            //  Font Awesome 兜底检测：CDN 挂了就给 body 加 class 用 emoji 顶上
-            // ============================================================
-            function checkIconFont() {
-                const apply = function() {
-                    let ok = false;
-                    try {
-                        ok = !!(document.fonts && document.fonts.check &&
-                            document.fonts.check('900 16px "Font Awesome 6 Free"'));
-                    } catch (e) {
-                        ok = false;
-                    }
-                    document.body.classList.toggle('icons-missing', !ok);
-                };
-                if (document.fonts && document.fonts.ready) {
-                    try { document.fonts.ready.then(apply); } catch (e) { /* 忽略 */ }
-                }
-                setTimeout(apply, 3500);   // CDN 慢/失败时的判定
-                setTimeout(apply, 8000);   // 再确认一次，加载好了就撤掉兜底
-            }
-
-            // ============================================================
             //  启动
             // ============================================================
             initData();
@@ -4786,9 +4900,12 @@
             loadTombstones();
             applyTheme(theme);
             setupEditorToolbar();
-            checkIconFont();
             renderAll();
             addRow.classList.add('hidden');
+            // 从主屏幕图标的快捷方式进来（?action=add）→ 直接展开新增行
+            try {
+                if (new URLSearchParams(location.search).get('action') === 'add') showAddRow();
+            } catch (e) { /* 老浏览器没有 URLSearchParams，忽略即可 */ }
             // 开了自动同步 → 启动时静默拉一次（失败也不打扰，只在状态栏提示）
             if (syncCfg.auto && syncConfigured()) doSyncPull(true);
 
@@ -4803,6 +4920,118 @@
                         .catch(function(e) { console.warn('Service Worker 注册失败（不影响使用）:', e); });
                 });
             }
+
+            // ============================================================
+            //  「装成 App」引导条
+            //   · 安卓 / 桌面 Chrome：能装时会抛出 beforeinstallprompt，点按钮直接弹原生安装框
+            //   · iOS Safari / 其它浏览器：没有安装 API，只能给「分享 → 添加到主屏幕」文字步骤
+            //   · 已经以 App 模式打开（standalone）→ 永不显示
+            //   · 点「以后再说」→ 静默 7 天；装好了 → 永久不再提示
+            // ============================================================
+            (function () {
+                const bar = document.getElementById('installBar');
+                if (!bar) return;   // 老版本页面没有这个条，安静退出
+
+                const TITLE_EL = document.getElementById('installTitle');
+                const DESC_EL = document.getElementById('installDesc');
+                const GO_BTN = document.getElementById('installGoBtn');
+                const HIDE_BTN = document.getElementById('installHideBtn');
+                const SNOOZE_KEY = 'installHintSnooze';
+                const DAY = 86400000;
+
+                let deferredPrompt = null;
+
+                function inAppMode() {
+                    try {
+                        if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+                    } catch (e) { /* 老浏览器忽略 */ }
+                    return window.navigator.standalone === true;
+                }
+
+                function isIOS() {
+                    const ua = navigator.userAgent || '';
+                    if (/iPad|iPhone|iPod/.test(ua)) return true;
+                    // iPadOS 13+ 的 UA 伪装成 macOS，只能靠触摸点数区分
+                    return navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1;
+                }
+
+                const isMobile = /Android|iPhone|iPad|iPod|Mobile|HarmonyOS|MicroMessenger/i.test(navigator.userAgent || '');
+                // 微信里没有「添加到主屏幕」入口，必须先「在浏览器打开」，否则给的步骤是错的
+                const isWeChat = /MicroMessenger/i.test(navigator.userAgent || '');
+
+                function snoozed() {
+                    try {
+                        return Date.now() - Number(localStorage.getItem(SNOOZE_KEY) || 0) < 7 * DAY;
+                    } catch (e) { return false; }
+                }
+
+                function hide() {
+                    bar.classList.add('hidden');
+                    document.body.classList.remove('install-hint-on');
+                }
+
+                function show(title, desc, canInstall) {
+                    if (TITLE_EL) TITLE_EL.textContent = title;
+                    if (DESC_EL) DESC_EL.textContent = desc;
+                    if (GO_BTN) GO_BTN.classList.toggle('hidden', !canInstall);
+                    bar.classList.remove('hidden');
+                    document.body.classList.add('install-hint-on');
+                }
+
+                // 1) 能装的时候浏览器会抛这个事件（安卓 Chrome / 桌面 Chrome / Edge）
+                window.addEventListener('beforeinstallprompt', function (e) {
+                    e.preventDefault();   // 拦掉浏览器自带的迷你提示，改用我们自己的条
+                    deferredPrompt = e;
+                    if (!inAppMode() && !snoozed()) {
+                        show('装成 App，用起来更顺手', '主屏幕多一个图标，打开即全屏，断网也能查。', true);
+                    }
+                });
+
+                // 2) 等不到安装事件的（iOS Safari、部分安卓浏览器）→ 给文字步骤
+                if (!inAppMode() && isMobile && !snoozed()) {
+                    setTimeout(function () {
+                        if (deferredPrompt || !bar.classList.contains('hidden')) return;   // 已经提示过了就不重复
+                        if (isWeChat) {
+                            show('先「在浏览器打开」，再添加到主屏幕',
+                                '微信里装不了：点右上角「…」→「在浏览器打开」→ 再按各浏览器的「添加到主屏幕」。', false);
+                        } else if (isIOS()) {
+                            show('添加到主屏幕，像 App 一样打开',
+                                '点 Safari 底部的「分享」按钮（方框＋向上箭头）→ 往下滑找「添加到主屏幕」→ 点「添加」。', false);
+                        } else {
+                            show('添加到主屏幕，像 App 一样打开',
+                                '点浏览器右上角的菜单 → 选「添加到主屏幕」或「安装应用」即可。', false);
+                        }
+                    }, 1200);
+                }
+
+                // 3) 点「立即安装」→ 弹原生安装框
+                if (GO_BTN) {
+                    GO_BTN.addEventListener('click', function () {
+                        if (!deferredPrompt) return;
+                        deferredPrompt.prompt();
+                        const p = deferredPrompt.userChoice;
+                        deferredPrompt = null;
+                        if (p && p.then) {
+                            p.then(function (r) { if (r && r.outcome === 'accepted') hide(); })
+                             .catch(function () { /* 忽略 */ });
+                        }
+                    });
+                }
+
+                // 4) 点「以后再说」→ 7 天不再打扰
+                if (HIDE_BTN) {
+                    HIDE_BTN.addEventListener('click', function () {
+                        hide();
+                        try { localStorage.setItem(SNOOZE_KEY, String(Date.now())); } catch (e) { /* 忽略 */ }
+                    });
+                }
+
+                // 5) 装好了 → 收起，并永久不再提示
+                window.addEventListener('appinstalled', function () {
+                    hide();
+                    try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + 3650 * DAY)); } catch (e) { /* 忽略 */ }
+                });
+            })();
         })();
     </script>
 </body>

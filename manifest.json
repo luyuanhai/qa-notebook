@@ -1,24 +1,51 @@
 {
-  "name": "问答笔记本",
+  "id": "qa-notebook",
+  "name": "问答知识库",
   "short_name": "问答本",
-  "description": "一个轻量级的问答管理笔记本，支持分类、批注和导出。",
-  "start_url": "index.html",
+  "description": "个人问答知识库：本地保存、自由插图、批量管理、云端同步；装成 App 后断网也能查。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f4f7fc",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f5f7fa",
   "theme_color": "#1a5bbf",
-  "orientation": "portrait",
+  "categories": ["productivity", "education"],
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231a5bbf'/%3E%3Ctext x='50' y='72' font-size='60' text-anchor='middle' fill='white'%3E📘%3C/text%3E%3C/svg%3E",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231a5bbf'/%3E%3Ctext x='50' y='72' font-size='60' text-anchor='middle' fill='white'%3E📘%3C/text%3E%3C/svg%3E",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "新增问答",
+      "short_name": "新增",
+      "description": "打开后直接展开新增行",
+      "url": "./?action=add",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
