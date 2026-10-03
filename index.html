@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>问答知识库</title>
+    <meta name="theme-color" content="#1a5bbf">
+    <!-- PWA：手机可「添加到主屏幕」，装完像 App，断网也能打开 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="问答本">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -4785,6 +4791,18 @@
             addRow.classList.add('hidden');
             // 开了自动同步 → 启动时静默拉一次（失败也不打扰，只在状态栏提示）
             if (syncCfg.auto && syncConfigured()) doSyncPull(true);
+
+            // ============================================================
+            //  Service Worker（离线可用 / 添加到主屏幕）
+            //  只在 https 下注册；本地双击打开（file://）时自动跳过
+            // ============================================================
+            if ('serviceWorker' in navigator && location.protocol === 'https:') {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('service-worker.js')
+                        .then(function() { console.log('离线缓存已启用'); })
+                        .catch(function(e) { console.warn('Service Worker 注册失败（不影响使用）:', e); });
+                });
+            }
         })();
     </script>
 </body>
