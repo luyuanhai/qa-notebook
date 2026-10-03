@@ -509,6 +509,98 @@
             color: #932f2f;
         }
         /* 注：.hidden 是全局 display:none !important，撤销按钮直接复用即可 */
+
+        /* ===== 云同步面板 ===== */
+        .sync-panel {
+            background: #f4f9ff;
+            border: 1px solid #cfdef0;
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin: 8px 0 12px;
+        }
+        .sync-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 10px;
+        }
+        .sync-row + .sync-row {
+            margin-top: 8px;
+        }
+        .sync-label {
+            font-size: 13px;
+            color: #3b5d7e;
+            flex: none;
+        }
+        .sync-panel select {
+            border: 1px solid #d4e0ee;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-size: 13px;
+            background: white;
+            color: #1f3a5f;
+            cursor: pointer;
+            outline: none;
+            font-family: inherit;
+            max-width: 100%;
+        }
+        .sync-input {
+            border: 1px solid #d4e0ee;
+            border-radius: 10px;
+            padding: 7px 12px;
+            font-size: 13px;
+            background: white;
+            color: #1f3a5f;
+            outline: none;
+            font-family: inherit;
+            min-width: 180px;
+            flex: 1 1 220px;
+            max-width: 100%;
+        }
+        .sync-input:focus {
+            border-color: #2a7de1;
+        }
+        .sync-input-sm {
+            flex: 0 1 160px;
+            min-width: 120px;
+        }
+        .sync-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #3b5d7e;
+            cursor: pointer;
+            user-select: none;
+        }
+        .sync-check input {
+            width: 16px;
+            height: 16px;
+            accent-color: #1a5bbf;
+            cursor: pointer;
+        }
+        .sync-panel .btn {
+            padding: 6px 14px;
+            font-size: 13px;
+        }
+        .sync-status {
+            font-size: 13px;
+            color: #3b5d7e;
+            margin-left: auto;
+            max-width: 100%;
+        }
+        .sync-note {
+            margin-top: 10px;
+            font-size: 12px;
+            line-height: 1.7;
+            color: #6b86a3;
+        }
+        .sync-note b {
+            color: #3b5d7e;
+        }
+        @media (max-width: 700px) {
+            .sync-status { margin-left: 0; }
+        }
         .batch-tip {
             font-size: 12px;
             color: #7a94b0;
@@ -1672,6 +1764,45 @@
         html[data-theme="dark"] .batch-bar .bb-sep {
             background: #34455a;
         }
+
+        /* —— 云同步面板 —— */
+        html[data-theme="dark"] .sync-panel {
+            background: #1b2532;
+            border-color: #34455a;
+        }
+        html[data-theme="dark"] .sync-panel select,
+        html[data-theme="dark"] .sync-input {
+            background: #222d3a;
+            border-color: #3d5169;
+            color: #dfe9f5;
+        }
+        html[data-theme="dark"] .sync-panel select option {
+            background: #222d3a;
+            color: #e6edf3;
+        }
+        html[data-theme="dark"] .sync-input::placeholder {
+            color: #6f8aa6;
+        }
+        html[data-theme="dark"] .sync-label,
+        html[data-theme="dark"] .sync-check,
+        html[data-theme="dark"] .sync-status {
+            color: #9db2c9;
+        }
+        html[data-theme="dark"] .sync-note {
+            color: #6f8aa6;
+        }
+        html[data-theme="dark"] .sync-note b {
+            color: #9db2c9;
+        }
+        html[data-theme="dark"] .sync-panel .btn-danger {
+            background: #3a2222;
+            color: #ff9d9d;
+            border-color: #6b3a3a;
+        }
+        html[data-theme="dark"] .sync-panel .btn-danger:hover {
+            background: #4a2828;
+            color: #ffc0c0;
+        }
         html[data-theme="dark"] .batch-tip {
             color: #6f8aa6;
         }
@@ -1777,11 +1908,63 @@
                     </svg>
                     <span id="themeLabel">暗黑</span>
                 </button>
+                <button class="btn btn-outline" id="syncBtn" title="云同步：把问答同步到云端，手机和电脑共用同一份数据">
+                    <svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M4.6 11.6a2.9 2.9 0 0 1-.3-5.8 4.1 4.1 0 0 1 7.8-.8 3.2 3.2 0 0 1-.4 6.4H4.6z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M8 7.2v4.6M6.1 10.3L8 12.2l1.9-1.9" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    云同步
+                </button>
                 <div class="search-box">
                     <i class="fas fa-search"></i>
                     <input type="text" id="searchInput" placeholder="搜索问答..." />
                     <button class="search-clear" id="searchClear" title="清空搜索"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.35"/><path d="M5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg></button>
                 </div>
+            </div>
+        </div>
+
+        <!-- ===== 云同步面板（点「云同步」展开） ===== -->
+        <div class="sync-panel hidden" id="syncPanel">
+            <div class="sync-row">
+                <span class="sync-label">后端</span>
+                <select id="syncBackendSel" title="选一个存放同步数据的地方">
+                    <option value="gist">GitHub Gist（推荐，和你的 Pages 同一账号）</option>
+                    <option value="custom">自定义接口（jsonbin / 自建 API 等）</option>
+                </select>
+                <label class="sync-check"><input type="checkbox" id="syncAutoChk"> 自动同步（打开页面自动拉取，改完自动上传）</label>
+            </div>
+
+            <div class="sync-row" id="rowGist">
+                <span class="sync-label">令牌</span>
+                <input type="password" class="sync-input" id="syncToken" placeholder="粘贴个人访问令牌（只需勾选 gist 读写权限）" />
+                <span class="sync-label">Gist ID</span>
+                <input type="text" class="sync-input" id="syncGistId" placeholder="留空则首次上传时自动新建（secret）" />
+            </div>
+
+            <div class="sync-row hidden" id="rowCustom">
+                <span class="sync-label">下载 URL</span>
+                <input type="text" class="sync-input" id="syncGetUrl" placeholder="https://…（GET 返回同步 JSON）" />
+                <span class="sync-label">上传 URL</span>
+                <input type="text" class="sync-input" id="syncPutUrl" placeholder="https://…（PUT/POST 接收同步 JSON）" />
+                <span class="sync-label">请求头</span>
+                <input type="text" class="sync-input sync-input-sm" id="syncHeaderName" placeholder="X-Master-Key" />
+                <input type="password" class="sync-input sync-input-sm" id="syncHeaderValue" placeholder="值（可留空）" />
+            </div>
+
+            <div class="sync-row">
+                <button class="btn btn-primary" id="syncSaveCfgBtn">保存设置</button>
+                <button class="btn btn-outline" id="syncPushBtn">
+                    <svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M8 12.4V3.6M4.8 6.8L8 3.6l3.2 3.2" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 13.2h10.4" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
+                    上传到云端
+                </button>
+                <button class="btn btn-outline" id="syncPullBtn">
+                    <svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M8 3.6v8.8M4.8 9.2L8 12.4l3.2-3.2" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 2.8h10.4" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
+                    从云端拉取
+                </button>
+                <button class="btn btn-outline" id="syncTestBtn">测试连接</button>
+                <button class="btn btn-danger" id="syncClearCfgBtn">清空配置</button>
+                <span class="sync-status" id="syncStatus">未配置</span>
+            </div>
+            <div class="sync-note">
+                说明：令牌只存在<b>你自己浏览器</b>里，不写进源码、不上传给任何人。仓库若公开，请不要把令牌贴到代码里。
+                同步是<b>按 id 合并</b>：哪边更新时间新就用哪边；本地删掉的条目会留 30 天「删除标记」，不会被云端拉回来。
             </div>
         </div>
 
@@ -1900,6 +2083,25 @@
             const themeToggleBtn = document.getElementById('themeToggleBtn');
             const themeLabel = document.getElementById('themeLabel');
             const themeIconPath = document.getElementById('themeIconPath');
+            // —— 云同步相关 DOM ——
+            const syncBtn = document.getElementById('syncBtn');
+            const syncPanel = document.getElementById('syncPanel');
+            const syncBackendSel = document.getElementById('syncBackendSel');
+            const syncAutoChk = document.getElementById('syncAutoChk');
+            const rowGist = document.getElementById('rowGist');
+            const rowCustom = document.getElementById('rowCustom');
+            const syncToken = document.getElementById('syncToken');
+            const syncGistId = document.getElementById('syncGistId');
+            const syncGetUrl = document.getElementById('syncGetUrl');
+            const syncPutUrl = document.getElementById('syncPutUrl');
+            const syncHeaderName = document.getElementById('syncHeaderName');
+            const syncHeaderValue = document.getElementById('syncHeaderValue');
+            const syncSaveCfgBtn = document.getElementById('syncSaveCfgBtn');
+            const syncPushBtn = document.getElementById('syncPushBtn');
+            const syncPullBtn = document.getElementById('syncPullBtn');
+            const syncTestBtn = document.getElementById('syncTestBtn');
+            const syncClearCfgBtn = document.getElementById('syncClearCfgBtn');
+            const syncStatus = document.getElementById('syncStatus');
 
             // ============================================================
             //  工具函数
@@ -2507,6 +2709,7 @@
                     localStorage.setItem('categories', JSON.stringify(categories));
                     localStorage.setItem('nextId', String(nextId));
                     localStorage.setItem('lastEditTime', JSON.stringify(lastEditTime));
+                    scheduleAutoPush();     // 开了自动同步就顺手推上去（内部有 4 秒防抖）
                     return true;
                 } catch (e) {
                     console.warn('保存失败:', e);
@@ -2591,7 +2794,9 @@
                 return [
                     { id: 1000, question: '📌 如何快速上手？', answer: '<p>点击"<strong>新增问答</strong>"添加内容，用"<strong>重要/一般/收藏</strong>"标记优先级，通过分类和搜索快速筛选。</p><p>支持富文本编辑：<strong>加粗</strong>、<em>斜体</em>、<u>下划线</u>、不同<font size="5">字体大小</font>和<font color="#e74c3c">颜色</font>。</p>',
                         category: '默认', importance: 'important', time: t },
-                    { id: 1001, question: '💡 数据存在哪里？安全吗？', answer: '<p>所有数据保存在您<strong>浏览器本地</strong>，不会上传任何服务器。建议定期用"导出Word"备份。</p><ul><li>换设备需要手动导入导出</li><li>清除浏览器网站数据会丢失</li></ul>',
+                    { id: 1001, question: '💡 数据存在哪里？安全吗？', answer: '<p>默认保存在您<strong>浏览器本地</strong>，不会自动上传任何服务器。建议定期用"导出缓存"备份一份。</p><ul><li>清除浏览器网站数据会丢失 —— 所以开了云同步更保险</li></ul>',
+                        category: '默认', importance: 'important', time: t },
+                    { id: 1010, question: '☁️ 手机和电脑怎么同步？', answer: '<p>点工具栏的"<strong>云同步</strong>"，填一次配置，之后点"上传到云端 / 从云端拉取"即可；勾上"<strong>自动同步</strong>"后，打开页面自动拉取、改完自动上传。</p><ol><li>后端选 GitHub Gist，填一个<strong>只勾了 gist 读写权限</strong>的令牌</li><li>第一次点"上传到云端"，会自动新建一个不公开的 Gist 并把 ID 填回框里</li><li>另一台设备打开同一网址，填<strong>同样的令牌 + 同一个 Gist ID</strong>，点"从云端拉取"</li></ol><blockquote>令牌只存在你自己的浏览器里，没有写进网页源码，也不会被同步走。两边都改过同一条时，<strong>时间更新的那一版胜出</strong>；本地删掉的不会被拉回来。</blockquote>',
                         category: '默认', importance: 'important', time: t },
                     { id: 1002, question: '📂 如何创建和管理分类？', answer: '<p>点击"<strong>新建分类</strong>"创建。鼠标悬停在分类标签上，会出现 ✏️ 和 🗑️ 按钮，可编辑或删除分类。</p><ol><li>点击"新建分类"输入名称</li><li>悬停分类标签点击✏️重命名</li><li>点击🗑️删除分类（问答自动移到"默认"）</li></ol>',
                         category: '默认', importance: 'normal', time: t },
@@ -2613,7 +2818,8 @@
                     qaData = getSampleData();
                     const cats = new Set(qaData.map(item => item.category));
                     categories = ['全部', ...Array.from(cats)];
-                    nextId = 1006;
+                    // 起始 id 必须大于示例数据的最大 id，否则新条目会撞号
+                    nextId = qaData.reduce((m, i) => Math.max(m, parseInt(i.id, 10) || 0), 0) + 1;
                     lastEditTime = new Date();
                     saveData();
                 }
@@ -3439,6 +3645,7 @@
 
                 // 倒序 splice，下标不会互相影响
                 for (let i = picked.length - 1; i >= 0; i--) qaData.splice(picked[i].index, 1);
+                markDeleted(picked.map(p => p.item.id));   // 记删除标记，云同步时不会被拉回来
 
                 undoBuffer = picked;          // 只保留最近一次批量删除
                 selectedIds.clear();
@@ -3460,6 +3667,7 @@
                     const at = Math.min(Math.max(p.index, 0), qaData.length);
                     qaData.splice(at, 0, p.item);
                 });
+                unmarkDeleted(back.map(p => p.item.id));   // 撤销 = 撤销删除标记
                 undoBuffer = [];
                 lastEditTime = new Date();
                 updateLastSaved();
@@ -3619,6 +3827,7 @@
                         e.stopPropagation();
                         if (confirm(`确定删除问答：“${item.question}” ？`)) {
                             qaData = qaData.filter(q => q.id !== item.id);
+                            markDeleted(item.id);            // 记删除标记，云同步时不会被拉回来
                             selectedIds.delete(item.id);   // 同步清掉勾选，避免残留幽灵 id
                             refreshCategories();
                             if (!categories.includes(currentCategory) && currentCategory !== '全部')
@@ -4008,6 +4217,7 @@
             function clearAll() {
                 if (qaData.length === 0) return;
                 if (confirm('⚠️ 确定清空所有问答吗？')) {
+                    markDeleted(qaData.map(i => i.id));   // 全部打上删除标记，同步后别的设备也会清掉
                     qaData = [];
                     selectedIds.clear();
                     clearUndoBuffer();   // 全清了，之前暂存的删除记录也一起作废
@@ -4135,6 +4345,288 @@
             }
 
             // ============================================================
+            //  云同步（后端：GitHub Gist / 自定义接口）
+            //  ⚠️ 令牌只存本机 localStorage，绝不写进源码（公开仓库会被看光）
+            // ============================================================
+            const SYNC_FILE = 'qa-sync.json';
+            const SYNC_API = 'https://api.github.com/gists';
+            let tombstones = {};        // { id: ISO时间 } 删除标记：防止云端把本地已删的条目又拉回来
+            let syncCfg = { backend: 'gist', token: '', gistId: '', getUrl: '', putUrl: '',
+                            headerName: '', headerValue: '', auto: false };
+            let syncBusy = false;
+            let autoPushTimer = null;
+            let lastSyncAt = null;
+
+            function setSyncStatus(text) { if (syncStatus) syncStatus.textContent = text; }
+
+            /* ---------- 配置 / 删除标记的本机存取 ---------- */
+            function loadSyncCfg() {
+                try {
+                    const raw = localStorage.getItem('qaSyncCfg');
+                    if (raw) Object.assign(syncCfg, JSON.parse(raw));
+                } catch (e) { console.warn('同步配置读取失败', e); }
+            }
+            function saveSyncCfg() {
+                try { localStorage.setItem('qaSyncCfg', JSON.stringify(syncCfg)); }
+                catch (e) { console.warn('同步配置保存失败', e); }
+            }
+            function loadTombstones() {
+                try { tombstones = JSON.parse(localStorage.getItem('qaTombstones') || '{}'); }
+                catch (e) { tombstones = {}; }
+                if (!tombstones || typeof tombstones !== 'object') tombstones = {};
+            }
+            function saveTombstones() {
+                try { localStorage.setItem('qaTombstones', JSON.stringify(tombstones)); } catch (e) { /* 忽略 */ }
+            }
+            function pruneTombstones() {
+                const cut = Date.now() - 30 * 24 * 3600 * 1000;   // 只留 30 天
+                Object.keys(tombstones).forEach(k => {
+                    const t = new Date(tombstones[k]).getTime();
+                    if (!t || t < cut) delete tombstones[k];
+                });
+            }
+            function markDeleted(ids, when) {
+                const t = (when || new Date()).toISOString();
+                (Array.isArray(ids) ? ids : [ids]).forEach(id => { tombstones[String(id)] = t; });
+                pruneTombstones();
+                saveTombstones();
+            }
+            function unmarkDeleted(ids) {
+                (Array.isArray(ids) ? ids : [ids]).forEach(id => { delete tombstones[String(id)]; });
+                saveTombstones();
+            }
+
+            function syncConfigured() {
+                return syncCfg.backend === 'gist'
+                    ? (!!syncCfg.token && !!syncCfg.gistId)
+                    : (!!syncCfg.getUrl && !!syncCfg.putUrl);
+            }
+            function syncPushable() {
+                return syncCfg.backend === 'gist' ? !!syncCfg.token : !!syncCfg.putUrl;
+            }
+
+            /* ---------- 同步包 ---------- */
+            function buildPayload() {
+                return {
+                    app: 'qa-kb', version: 1,
+                    updatedAt: new Date().toISOString(),
+                    categories: categories, nextId: nextId,
+                    qaData: qaData, tombstones: tombstones
+                };
+            }
+
+            function ghHeaders() {
+                const h = { 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+                if (syncCfg.token) h['Authorization'] = 'Bearer ' + syncCfg.token;
+                return h;
+            }
+
+            /* ---------- 上传 ---------- */
+            async function remotePush(payload) {
+                const body = JSON.stringify(payload);
+                if (syncCfg.backend === 'gist') {
+                    const files = {}; files[SYNC_FILE] = { content: body };
+                    const headers = ghHeaders();
+                    headers['Content-Type'] = 'application/json';
+                    let res;
+                    if (syncCfg.gistId) {
+                        res = await fetch(SYNC_API + '/' + encodeURIComponent(syncCfg.gistId), {
+                            method: 'PATCH', headers: headers, body: JSON.stringify({ files: files })
+                        });
+                    } else {
+                        res = await fetch(SYNC_API, {
+                            method: 'POST', headers: headers,
+                            body: JSON.stringify({ description: '问答知识库 · 同步数据', public: false, files: files })
+                        });
+                    }
+                    const text = await res.text();
+                    if (!res.ok) throw new Error('GitHub 返回 ' + res.status + '：' + text.slice(0, 160));
+                    const data = JSON.parse(text);
+                    if (data && data.id && data.id !== syncCfg.gistId) {
+                        syncCfg.gistId = data.id;          // 首次上传自动建号，回写表单
+                        saveSyncCfg();
+                        fillSyncForm();
+                    }
+                    return { id: data && data.id };
+                }
+                const h = { 'Content-Type': 'application/json' };
+                if (syncCfg.headerName) h[syncCfg.headerName] = syncCfg.headerValue || '';
+                const res = await fetch(syncCfg.putUrl, { method: 'PUT', headers: h, body: body });
+                if (!res.ok) throw new Error('上传接口返回 ' + res.status);
+                return {};
+            }
+
+            /* ---------- 拉取 ---------- */
+            async function remotePull() {
+                if (syncCfg.backend === 'gist') {
+                    const metaRes = await fetch(SYNC_API + '/' + encodeURIComponent(syncCfg.gistId), { headers: ghHeaders() });
+                    if (!metaRes.ok) throw new Error('读取 Gist 失败：HTTP ' + metaRes.status + '（令牌失效或 ID 不对）');
+                    const meta = await metaRes.json();
+                    const fs = meta.files || {};
+                    const f = fs[SYNC_FILE] || Object.keys(fs).map(k => fs[k])[0];
+                    if (!f) throw new Error('这个 Gist 里还没有同步文件，先点「上传到云端」');
+                    // 走 raw_url 拿全文 —— 接口返回的 content 超过 1MB 会被截断
+                    const rawRes = await fetch(f.raw_url, { cache: 'no-store' });
+                    if (!rawRes.ok) throw new Error('读取同步内容失败：HTTP ' + rawRes.status);
+                    return { payload: JSON.parse(await rawRes.text()), updatedAt: meta.updated_at };
+                }
+                const h = {};
+                if (syncCfg.headerName) h[syncCfg.headerName] = syncCfg.headerValue || '';
+                const res = await fetch(syncCfg.getUrl, { headers: h, cache: 'no-store' });
+                if (!res.ok) throw new Error('下载接口返回 HTTP ' + res.status);
+                return { payload: JSON.parse(await res.text()), updatedAt: null };
+            }
+
+            /* ---------- 合并：按 id 合并，时间新的赢，已删的不复活 ---------- */
+            function mergePayload(payload) {
+                if (!payload || !Array.isArray(payload.qaData)) throw new Error('云端数据格式不对（缺少 qaData）');
+
+                const rt = payload.tombstones || {};
+                Object.keys(rt).forEach(k => {
+                    if (!tombstones[k] || new Date(rt[k]) > new Date(tombstones[k])) tombstones[k] = rt[k];
+                });
+
+                const map = new Map();
+                qaData.forEach(i => map.set(String(i.id), i));
+                let added = 0, updated = 0, skipped = 0;
+
+                payload.qaData.forEach(ri => {
+                    if (!ri || ri.id === undefined || ri.id === null) return;
+                    const key = String(ri.id);
+                    const delAt = tombstones[key] ? new Date(tombstones[key]).getTime() : 0;
+                    const editAt = new Date(String(ri.time || '')).getTime() || 0;
+                    if (delAt && delAt >= editAt - 60000) { skipped++; return; }   // 本地删得更晚 → 不复活
+                    const local = map.get(key);
+                    if (!local) { qaData.push(ri); map.set(key, ri); added++; return; }
+                    const lt = new Date(String(local.time || '')).getTime() || 0;
+                    if (editAt > lt) { Object.assign(local, ri); updated++; }
+                });
+
+                const cats = (Array.isArray(payload.categories) ? payload.categories : []).concat(categories);
+                categories = ['全部'];
+                cats.forEach(c => { if (c && c !== '全部' && categories.indexOf(c) === -1) categories.push(c); });
+                if (categories.indexOf('默认') === -1) categories.push('默认');
+
+                const rn = parseInt(payload.nextId, 10);
+                if (!isNaN(rn) && rn > nextId) nextId = rn;
+                qaData.forEach(i => { const n = parseInt(i.id, 10); if (!isNaN(n) && n >= nextId) nextId = n + 1; });
+
+                pruneTombstones();
+                saveTombstones();
+                return { added: added, updated: updated, skipped: skipped };
+            }
+
+            /* ---------- 对外动作 ---------- */
+            async function doSyncPull(silent) {
+                if (syncBusy) { if (!silent) alert('同步进行中，稍等一下'); return; }
+                if (!syncConfigured()) {
+                    openSyncPanel();
+                    if (!silent) alert('还没配好云同步。\n用 Gist 的话：填令牌 → 先点一次「上传到云端」→ 会自动生成 Gist ID。');
+                    return;
+                }
+                syncBusy = true; setSyncStatus('正在拉取…');
+                try {
+                    const r = await remotePull();
+                    const stat = mergePayload(r.payload);
+                    lastEditTime = new Date();
+                    updateLastSaved();
+                    renderAll();
+                    saveData();
+                    lastSyncAt = new Date();
+                    setSyncStatus(`已拉取 · 新增 ${stat.added} / 更新 ${stat.updated}` +
+                                  (stat.skipped ? ` / 忽略已删 ${stat.skipped}` : '') + ' · ' + formatTime(lastSyncAt));
+                    if (!silent) alert(`✅ 已合并云端数据：新增 ${stat.added} 条，更新 ${stat.updated} 条` +
+                                       (stat.skipped ? `，忽略 ${stat.skipped} 条本地已删除的` : '') + '。');
+                    if (syncCfg.auto) scheduleAutoPush();      // 拉完再推一次，两边收敛
+                } catch (e) {
+                    console.error('拉取失败', e);
+                    setSyncStatus('拉取失败：' + e.message);
+                    if (!silent) alert('❌ 拉取失败：' + e.message);
+                } finally { syncBusy = false; }
+            }
+
+            async function doSyncPush(silent) {
+                if (syncBusy) { if (!silent) alert('同步进行中，稍等一下'); return; }
+                if (!syncPushable()) { openSyncPanel(); if (!silent) alert('先填好云同步设置'); return; }
+                syncBusy = true; setSyncStatus('正在上传…');
+                try {
+                    const r = await remotePush(buildPayload());
+                    lastSyncAt = new Date();
+                    setSyncStatus(`已上传 ${qaData.length} 条 · ${formatTime(lastSyncAt)}`);
+                    if (!silent) alert(`✅ 已上传 ${qaData.length} 条问答到云端。` +
+                                       (r && r.id ? `\nGist ID：${r.id}（已自动填好，另一台设备填同一个 ID 即可）` : ''));
+                } catch (e) {
+                    console.error('上传失败', e);
+                    setSyncStatus('上传失败：' + e.message);
+                    if (!silent) alert('❌ 上传失败：' + e.message);
+                } finally { syncBusy = false; }
+            }
+
+            function scheduleAutoPush() {
+                if (!syncCfg.auto || !syncPushable()) return;
+                if (autoPushTimer) clearTimeout(autoPushTimer);
+                autoPushTimer = setTimeout(function() { doSyncPush(true); }, 4000);
+            }
+
+            async function testSync() {
+                setSyncStatus('测试中…');
+                try {
+                    if (syncCfg.backend === 'gist') {
+                        if (!syncCfg.token) throw new Error('还没填 GitHub 令牌');
+                        const res = await fetch(SYNC_API, { headers: ghHeaders() });
+                        if (!res.ok) throw new Error('GitHub 返回 HTTP ' + res.status + '（令牌无效或没有 gist 权限）');
+                        const list = await res.json();
+                        setSyncStatus(`令牌可用，能看到 ${list.length} 个 Gist`);
+                        alert('✅ 令牌可用。' + (syncCfg.gistId ? '已配好 Gist ID，可以直接上传 / 拉取。'
+                                                                : '还没配 Gist ID —— 点「上传到云端」会自动新建一个。'));
+                    } else {
+                        if (!syncCfg.getUrl) throw new Error('还没填下载 URL');
+                        const h = {};
+                        if (syncCfg.headerName) h[syncCfg.headerName] = syncCfg.headerValue || '';
+                        const res = await fetch(syncCfg.getUrl, { headers: h, cache: 'no-store' });
+                        if (!res.ok) throw new Error('下载接口返回 HTTP ' + res.status);
+                        const p = JSON.parse(await res.text());
+                        setSyncStatus('接口可用，云端有 ' + ((p.qaData || []).length) + ' 条');
+                        alert('✅ 接口可用，云端现有 ' + ((p.qaData || []).length) + ' 条问答。');
+                    }
+                } catch (e) {
+                    setSyncStatus('测试失败：' + e.message);
+                    alert('❌ 测试失败：' + e.message);
+                }
+            }
+
+            /* ---------- 表单 ---------- */
+            function fillSyncForm() {
+                syncBackendSel.value = syncCfg.backend;
+                syncAutoChk.checked = !!syncCfg.auto;
+                syncToken.value = syncCfg.token || '';
+                syncGistId.value = syncCfg.gistId || '';
+                syncGetUrl.value = syncCfg.getUrl || '';
+                syncPutUrl.value = syncCfg.putUrl || '';
+                syncHeaderName.value = syncCfg.headerName || '';
+                syncHeaderValue.value = syncCfg.headerValue || '';
+                rowGist.classList.toggle('hidden', syncCfg.backend !== 'gist');
+                rowCustom.classList.toggle('hidden', syncCfg.backend !== 'custom');
+                setSyncStatus(syncConfigured()
+                    ? '已配置' + (lastSyncAt ? ' · 上次同步 ' + formatTime(lastSyncAt) : '')
+                    : '未配置');
+            }
+            function readSyncForm() {
+                syncCfg.backend = syncBackendSel.value;
+                syncCfg.auto = !!syncAutoChk.checked;
+                syncCfg.token = syncToken.value.trim();
+                syncCfg.gistId = syncGistId.value.trim();
+                syncCfg.getUrl = syncGetUrl.value.trim();
+                syncCfg.putUrl = syncPutUrl.value.trim();
+                syncCfg.headerName = syncHeaderName.value.trim();
+                syncCfg.headerValue = syncHeaderValue.value;
+            }
+            function openSyncPanel() {
+                syncPanel.classList.remove('hidden');
+                fillSyncForm();
+            }
+
+            // ============================================================
             //  渲染所有
             // ============================================================
             function renderAll() {
@@ -4195,6 +4687,38 @@
             // ============================================================
             themeToggleBtn.addEventListener('click', toggleTheme);
 
+            // ============================================================
+            //  云同步：展开面板 / 切换后端 / 保存 / 上传 / 拉取 / 测试
+            // ============================================================
+            syncBtn.addEventListener('click', function() {
+                const willOpen = syncPanel.classList.contains('hidden');
+                syncPanel.classList.toggle('hidden', !willOpen);
+                if (willOpen) fillSyncForm();
+            });
+            syncBackendSel.addEventListener('change', function() {
+                rowGist.classList.toggle('hidden', this.value !== 'gist');
+                rowCustom.classList.toggle('hidden', this.value !== 'custom');
+            });
+            syncSaveCfgBtn.addEventListener('click', function() {
+                readSyncForm();
+                saveSyncCfg();
+                setSyncStatus(syncConfigured() ? '已配置' : '已保存，但还不完整（无法同步）');
+                alert('✅ 设置已保存在本机浏览器。\n\n注意：令牌不会跟着数据走，换设备要在那边再填一次。' +
+                      (syncConfigured() ? '' : '\n\n当前还差：' +
+                        (syncCfg.backend === 'gist' ? '令牌 / Gist ID' : '下载 URL / 上传 URL')));
+            });
+            syncPushBtn.addEventListener('click', function() { readSyncForm(); saveSyncCfg(); doSyncPush(false); });
+            syncPullBtn.addEventListener('click', function() { readSyncForm(); saveSyncCfg(); doSyncPull(false); });
+            syncTestBtn.addEventListener('click', function() { readSyncForm(); testSync(); });
+            syncClearCfgBtn.addEventListener('click', function() {
+                if (!confirm('清空本机的云同步配置（令牌、Gist ID）吗？\n\n云端数据不会被删除。')) return;
+                syncCfg = { backend: 'gist', token: '', gistId: '', getUrl: '', putUrl: '',
+                            headerName: '', headerValue: '', auto: false };
+                try { localStorage.removeItem('qaSyncCfg'); } catch (e) { /* 忽略 */ }
+                fillSyncForm();
+                alert('已清空本机同步配置。');
+            });
+
             // 导出缓存
             exportCacheBtn.addEventListener('click', exportCache);
 
@@ -4252,11 +4776,15 @@
             // ============================================================
             initData();
             loadPrefs();
+            loadSyncCfg();
+            loadTombstones();
             applyTheme(theme);
             setupEditorToolbar();
             checkIconFont();
             renderAll();
             addRow.classList.add('hidden');
+            // 开了自动同步 → 启动时静默拉一次（失败也不打扰，只在状态栏提示）
+            if (syncCfg.auto && syncConfigured()) doSyncPull(true);
         })();
     </script>
 </body>
