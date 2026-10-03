@@ -1995,6 +1995,26 @@
                 flex: 1;
             }
         }
+
+        /* ============================================================
+           手机端排版兜底：窄屏上「图左文右 / 图右文左」会把文字挤成一条细缝，
+           改成独占一行居中；自由定位的图片也保证不超出容器宽度。
+           ============================================================ */
+        @media (max-width: 700px) {
+            .qa-answer-editor img.qa-img.qa-img-float-left,
+            .answer-content img.qa-img.qa-img-float-left,
+            .qa-answer-editor img.qa-img.qa-img-float-right,
+            .answer-content img.qa-img.qa-img-float-right {
+                float: none;
+                display: block;
+                margin: 10px auto;
+                max-width: 100%;
+            }
+            .qa-answer-editor img.qa-img-free,
+            .answer-content img.qa-img-free {
+                max-width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2542,6 +2562,7 @@
                 imageUI.img.style.width = w + 'px';
                 imageUI.img.style.height = 'auto';
                 positionImageUI();
+                saveFreeLayout(imageUI.img, imageUI.editor);   // 改了尺寸，相对宽高也要跟着变
                 syncFreeHeight(imageUI.editor);
             }
 
@@ -2550,6 +2571,7 @@
                 imageUI.img.style.width = Math.max(5, Math.min(100, pct)) + '%';
                 imageUI.img.style.height = 'auto';
                 positionImageUI();
+                saveFreeLayout(imageUI.img, imageUI.editor);
                 syncFreeHeight(imageUI.editor);
             }
 
@@ -3095,6 +3117,90 @@
                 container.style.minHeight = Math.round(bottom + 16) + 'px';
             }
 
+            // ============================================================
+            //  【跨设备还原】自由图片的「相对坐标」
+            //  问题：left / top / width 原本是纯像素。电脑上容器 800px 宽摆好的图
+            //        （比如 left:620px），到手机上容器只剩 360px —— 图片直接跑到屏幕外，
+            //        表现就是「同样的照片，手机端看不到」。
+            //  做法：额外把 left / top / width 记成「相对容器宽度的百分比」
+            //        （data-fx / data-fy / data-fw，跟着 HTML 一起存），
+            //        渲染时按当前容器宽度换算回像素；拖动 / 缩放 / 解锁后再回写百分比。
+            //  纵向也用宽度做基准 —— 容器高度会随文字重排变化，用高度百分比会让图乱飘。
+            // ============================================================
+            function freeBoxWidth(container) {
+                return container.clientWidth || container.offsetWidth || 0;
+            }
+
+            /** 用当前像素坐标反算百分比写进 data（解锁 / 拖动结束 / 缩放后都要调） */
+            function saveFreeLayout(img, container) {
+                if (!img || !container || !isFreeImage(img)) return;
+                const w = freeBoxWidth(container);
+                if (!w) return;
+                const left = parseFloat(img.style.left) || 0;
+                const top = parseFloat(img.style.top) || 0;
+                const iw = img.getBoundingClientRect().width ||
+                           img.offsetWidth || parseFloat(img.style.width) || 0;
+                if (!iw) return;
+                img.dataset.fx = (left / w * 100).toFixed(2);
+                img.dataset.fy = (top / w * 100).toFixed(2);
+                img.dataset.fw = (iw / w * 100).toFixed(2);
+            }
+
+            /**
+             * 抢救老数据：改造前存的图片只有像素坐标（left 可能是 620px 这种按电脑宽屏算的值），
+             * 直接按手机容器补算百分比会把错误坐标永久固化。
+             * 判据：图片的右边界超出容器 → 说明它是按更宽的屏幕摆的 → 整块等比压进容器，
+             * 保住「靠左还是靠右」的相对位置，再补算百分比。用户之后重新拖一下就彻底修好。
+             */
+            function adoptLegacyFreeImage(img, container) {
+                const w = freeBoxWidth(container);
+                if (!w) return;
+                let left = parseFloat(img.style.left) || 0;
+                let top = parseFloat(img.style.top) || 0;
+                let iw = img.getBoundingClientRect().width ||
+                         img.offsetWidth || parseFloat(img.style.width) || 0;
+                if (!iw) return;                 // 图片还没解码，等 load 再补算
+                const right = left + iw;
+                if (right > w + 2) {
+                    const scale = w / right;
+                    left *= scale;
+                    top *= scale;
+                    iw *= scale;
+                    img.style.left = Math.round(left) + 'px';
+                    img.style.top = Math.round(top) + 'px';
+                    img.style.width = Math.round(iw) + 'px';
+                    img.style.height = 'auto';
+                }
+                saveFreeLayout(img, container);
+            }
+
+            /** 按当前容器宽度还原像素坐标；老数据（没有 data 属性）先抢救再补算 */
+            function applyFreeLayout(container) {
+                if (!container) return;
+                const w = freeBoxWidth(container);
+                if (!w) return;
+                container.querySelectorAll('img.qa-img-free').forEach(function (img) {
+                    const fx = parseFloat(img.dataset.fx);
+                    const fy = parseFloat(img.dataset.fy);
+                    const fw = parseFloat(img.dataset.fw);
+                    if (isNaN(fx) || isNaN(fy) || isNaN(fw)) {
+                        adoptLegacyFreeImage(img, container);
+                        return;
+                    }
+                    img.style.left = Math.round(fx / 100 * w) + 'px';
+                    img.style.top = Math.round(fy / 100 * w) + 'px';
+                    img.style.width = Math.round(fw / 100 * w) + 'px';
+                    img.style.height = 'auto';
+                });
+                syncFreeHeight(container);
+            }
+
+            /** 窗口缩放 / 手机横竖屏切换 → 所有自由图片按新宽度重排 */
+            function relayoutAllFreeImages() {
+                // .free-layer 是阅读态定位容器；.qa-answer-editor 是编辑区（新增 / 行内编辑）
+                document.querySelectorAll('.free-layer, .qa-answer-editor').forEach(applyFreeLayout);
+            }
+
             /** 解锁：图片变成浮在画布上的贴纸 */
             function makeImageFree(img, container) {
                 if (!img || !container || isFreeImage(img)) return;
@@ -3116,6 +3222,7 @@
                     img.style.width = Math.round(r.width) + 'px';
                 }
                 freeOrigin.set(img, origin);
+                saveFreeLayout(img, container);   // 记下相对坐标，换设备才能还原
                 syncFreeHeight(container);
             }
 
@@ -3126,6 +3233,8 @@
                 ['position', 'left', 'top', 'zIndex', 'float', 'display', 'margin'].forEach(k => {
                     img.style[k] = '';
                 });
+                // 回到文档流后相对坐标就没意义了，清掉免得下次误用
+                ['fx', 'fy', 'fw'].forEach(k => { if (img.dataset) delete img.dataset[k]; });
                 const o = freeOrigin.get(img);
                 freeOrigin.delete(img);
 
@@ -3203,6 +3312,7 @@
                     window.removeEventListener('pointerup', onUp);
                     window.removeEventListener('pointercancel', onUp);
                     img.classList.remove('img-free-moving');
+                    saveFreeLayout(img, container);   // 落定后回写相对坐标
                     syncFreeHeight(container);
                     showImageUI(container, img);
                 };
@@ -4090,10 +4200,12 @@
                         // 统一挂载：文本命令 + 图片插入/缩放/删除
                         attachEditorFeatures(editor, toolbar);
 
-                        // 已存在的自由定位图片：撑开编辑区高度，并等图片解码后补算
-                        syncFreeHeight(editor);
+                        // 已存在的自由定位图片：按**当前容器宽度**还原坐标（跨设备一致），
+                        // 再撑开编辑区高度；图片解码完成才有真实高度，所以 load 后补算一次
+                        applyFreeLayout(editor);
                         editor.querySelectorAll('img.qa-img-free').forEach(im => {
-                            if (!im.complete) im.addEventListener('load', function() { syncFreeHeight(editor); });
+                            // 图片解码完才有真实宽度，老数据要等这时才能补算相对坐标
+                            if (!im.complete) im.addEventListener('load', function() { applyFreeLayout(editor); });
                         });
 
                         setTimeout(() => editor.focus(), 50);
@@ -4126,15 +4238,16 @@
                 container.innerHTML = '';
                 container.appendChild(fragment);
 
-                // 阅读态：自由定位的图片不占高度，容器需要按最下方的图撑开
+                // 阅读态：先按当前容器宽度把相对坐标还原成像素（手机上才不会跑出屏幕），
+                // 自由定位的图片不占高度，容器需要按最下方的图撑开
                 // 图片解码完成才有真实高度，所以 load 之后再补算一次
                 container.querySelectorAll('.answer-content.free-layer').forEach(layer => {
                     const imgs = layer.querySelectorAll('img.qa-img-free');
                     if (!imgs.length) return;
-                    syncFreeHeight(layer);
+                    applyFreeLayout(layer);
                     imgs.forEach(im => {
                         if (!im.complete) {
-                            im.addEventListener('load', function() { syncFreeHeight(layer); });
+                            im.addEventListener('load', function() { applyFreeLayout(layer); });
                         }
                     });
                 });
@@ -4906,6 +5019,16 @@
             try {
                 if (new URLSearchParams(location.search).get('action') === 'add') showAddRow();
             } catch (e) { /* 老浏览器没有 URLSearchParams，忽略即可 */ }
+
+            // 窗口缩放 / 手机横竖屏切换 → 自由图片按新的容器宽度重排（防抖，别抖一次算一次）
+            let relayoutTimer = null;
+            window.addEventListener('resize', function () {
+                clearTimeout(relayoutTimer);
+                relayoutTimer = setTimeout(relayoutAllFreeImages, 150);
+            });
+            window.addEventListener('orientationchange', function () {
+                setTimeout(relayoutAllFreeImages, 250);
+            });
             // 开了自动同步 → 启动时静默拉一次（失败也不打扰，只在状态栏提示）
             if (syncCfg.auto && syncConfigured()) doSyncPull(true);
 
@@ -4998,8 +5121,11 @@
                             show('添加到主屏幕，像 App 一样打开',
                                 '点 Safari 底部的「分享」按钮（方框＋向上箭头）→ 往下滑找「添加到主屏幕」→ 点「添加」。', false);
                         } else {
-                            show('添加到主屏幕，像 App 一样打开',
-                                '点浏览器右上角的菜单 → 选「添加到主屏幕」或「安装应用」即可。', false);
+                            // 国产安卓（vivo / OPPO / 小米 / 华为等）自带浏览器多半叫「添加到桌面」，
+                            // 生成的是桌面快捷方式；真正无地址栏 + 可离线的 App 要靠 Chrome / Edge 装
+                            show('添加到桌面，一键直达',
+                                '点浏览器菜单（⋮ 或 ☰）→ 选「添加到桌面 / 添加到主屏幕」。'
+                                + '想要没有地址栏、断网也能开的独立 App，请用 Chrome 或 Edge 打开同一网址 → 选「安装应用」。', false);
                         }
                     }, 1200);
                 }
