@@ -408,6 +408,117 @@
         .qa-item:hover {
             border-color: #cbddea;
         }
+
+        /* ============================================================
+           【批量选择】复选框 + 批量操作条
+           ============================================================ */
+        .qa-item.qa-selected {
+            border-color: #2a7de1;
+            background: #f4f9ff;
+            box-shadow: 0 4px 10px -4px rgba(42, 125, 225, 0.28);
+        }
+        .qa-select {
+            display: inline-flex;
+            align-items: center;
+            align-self: flex-start;
+            margin-top: 2px;
+            cursor: pointer;
+            flex: none;
+        }
+        .qa-select input {
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+            accent-color: #1a5bbf;
+            flex: none;
+        }
+
+        .batch-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 10px;
+            background: #eef5ff;
+            border: 1px solid #cfdef0;
+            border-radius: 14px;
+            padding: 10px 14px;
+            margin: 8px 0 12px;
+        }
+        .batch-bar .batch-checkall {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1f3a5f;
+            user-select: none;
+        }
+        .batch-bar .batch-checkall input {
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+            accent-color: #1a5bbf;
+        }
+        .batch-count {
+            font-size: 13px;
+            color: #3b5d7e;
+        }
+        .batch-count b {
+            color: #1a5bbf;
+            font-size: 15px;
+        }
+        .batch-bar .bb-sep {
+            width: 1px;
+            height: 20px;
+            background: #cfdef0;
+            margin: 0 2px;
+        }
+        .batch-bar select {
+            border: 1px solid #d4e0ee;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-size: 13px;
+            background: white;
+            color: #1f3a5f;
+            cursor: pointer;
+            outline: none;
+            font-family: inherit;
+        }
+        .batch-bar select:focus {
+            border-color: #2a7de1;
+        }
+        .batch-bar .btn {
+            padding: 6px 14px;
+            font-size: 13px;
+        }
+        /* 注意：这里不能再写 background:white —— 会盖掉 .btn-primary 的蓝底，
+           导致「改分类」变成白底白字完全看不见 */
+        .batch-bar .btn-outline {
+            background: white;
+            color: #1f3a5f;
+        }
+        .batch-bar .btn-danger {
+            background: white;
+            color: #b13e3e;
+            border-color: #f0c9c9;
+        }
+        .batch-bar .btn-danger:hover {
+            background: #ffe9e9;
+            border-color: #dba8a8;
+            color: #932f2f;
+        }
+        /* 注：.hidden 是全局 display:none !important，撤销按钮直接复用即可 */
+        .batch-tip {
+            font-size: 12px;
+            color: #7a94b0;
+            margin-left: auto;
+        }
+        @media (max-width: 700px) {
+            .batch-tip {
+                display: none;
+            }
+        }
         .qa-header {
             display: flex;
             flex-wrap: wrap;
@@ -449,27 +560,40 @@
             align-items: center;
             margin-left: 4px;
         }
+        /* 图标 + 中文短标签：不依赖任何图标字体，断网/暗黑都看得见 */
         .qa-actions button {
             background: transparent;
-            border: none;
-            width: 32px;
-            height: 32px;
+            border: 1px solid transparent;
+            height: 30px;
+            padding: 0 11px 0 9px;
             border-radius: 40px;
-            font-size: 15px;
-            color: #3d638b;
+            font-size: 12.5px;
+            font-family: inherit;
+            color: #2a5d8f;
             cursor: pointer;
             transition: 0.1s;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .qa-actions button svg {
+            width: 14px;
+            height: 14px;
+            flex: none;
         }
         .qa-actions button:hover {
             background: #e2edfc;
+            border-color: #c5d8ed;
             color: #0a3c74;
+        }
+        .qa-actions .del-btn {
+            color: #a1423a;
         }
         .qa-actions .del-btn:hover {
             background: #fee8e8;
-            color: #b13e3e;
+            border-color: #f5cdc7;
+            color: #8d3229;
         }
 
         /* ===== 回答内容（富文本显示） ===== */
@@ -1095,6 +1219,538 @@
                 width: 60px;
             }
         }
+
+        /* ============================================================
+           【新增】问题标题行内编辑
+           ============================================================ */
+        .q-edit-box {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            flex: 1 1 240px;
+        }
+        .q-edit-input {
+            flex: 1 1 180px;
+            min-width: 140px;
+            border: 1px solid #d4e0ee;
+            border-radius: 40px;
+            padding: 7px 16px;
+            font-size: 15px;
+            font-family: inherit;
+            font-weight: 600;
+            color: #0d2847;
+            background: white;
+            outline: none;
+        }
+        .q-edit-input:focus {
+            border-color: #2a7de1;
+            box-shadow: 0 0 0 3px rgba(42, 125, 225, 0.12);
+        }
+        .q-edit-box .btn {
+            padding: 5px 14px;
+            font-size: 13px;
+        }
+
+        /* ============================================================
+           【新增】分页
+           ============================================================ */
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px 10px;
+            margin: 20px 0 4px;
+            padding-top: 4px;
+        }
+        .pager-btn {
+            min-width: 36px;
+            height: 34px;
+            padding: 0 12px;
+            border: 1px solid #d0ddee;
+            background: #f9fcff;
+            color: #1f3a5f;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.15s;
+            font-family: inherit;
+        }
+        .pager-btn:hover:not(:disabled):not(.active) {
+            background: #eaf0fa;
+            border-color: #b0c6e0;
+        }
+        .pager-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .pager-btn.active {
+            background: #1a5bbf;
+            border-color: #1a5bbf;
+            color: #fff;
+        }
+        .pager-info {
+            font-size: 13px;
+            color: #4b6a8a;
+            white-space: nowrap;
+        }
+        .pager-info b {
+            color: #1a5bbf;
+        }
+        .page-size-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #4b6a8a;
+        }
+        .page-size-wrap select {
+            border: 1px solid #d0ddee;
+            background: #f9fcff;
+            color: #1f3a5f;
+            border-radius: 40px;
+            padding: 5px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+        .page-size-wrap select:focus {
+            border-color: #2a7de1;
+        }
+        .pager-dots {
+            color: #8aa4c0;
+            padding: 0 2px;
+        }
+
+        /* —— 原本写死在 style 属性里的颜色，搬到 class 上，暗黑模式才能覆盖 —— */
+        .new-cat-select {
+            border-radius: 40px;
+            padding: 10px 18px;
+            border: 1px solid #d4e0ee;
+            background: white;
+            font-size: 14px;
+            color: #1f3a5f;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+        .new-cat-select:focus {
+            border-color: #2a7de1;
+            box-shadow: 0 0 0 3px rgba(42, 125, 225, 0.12);
+        }
+        .qa-cat-tag {
+            color: #22558a;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .empty-answer {
+            color: #9aa8b8;
+        }
+        /* 图标换成内联 SVG 后的对齐 / 尺寸补齐 */
+        .qa-question .q-icon {
+            display: inline-flex;
+            align-items: center;
+        }
+        .qa-answer .answer-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            vertical-align: middle;
+        }
+        .cat-edit-btn svg,
+        .cat-del-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* ============================================================
+           【新增】暗黑主题
+           做法：html[data-theme="dark"] + 原选择器 = 特异性更高，直接覆盖
+           ============================================================ */
+        html[data-theme="dark"] {
+            color-scheme: dark;
+        }
+        html[data-theme="dark"] body {
+            background: #0f141b;
+        }
+        html[data-theme="dark"] .app-container {
+            background: #19212c;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.7);
+        }
+        html[data-theme="dark"] h1 {
+            color: #e8eff8;
+        }
+        html[data-theme="dark"] .last-saved {
+            background: #22303f;
+            color: #a9c0d8;
+        }
+
+        /* —— 按钮 —— */
+        html[data-theme="dark"] .btn {
+            background: #222d3a;
+            border-color: #34455a;
+            color: #d6e2f0;
+        }
+        html[data-theme="dark"] .btn i {
+            color: #8fb4dc;
+        }
+        html[data-theme="dark"] .btn:hover {
+            background: #2a3746;
+            border-color: #46586f;
+        }
+        html[data-theme="dark"] .btn-primary {
+            background: #2a6fd6;
+            border-color: #2a6fd6;
+            color: #fff;
+        }
+        html[data-theme="dark"] .btn-primary i {
+            color: #fff;
+        }
+        html[data-theme="dark"] .btn-primary:hover {
+            background: #1e5cbb;
+            border-color: #1e5cbb;
+        }
+        html[data-theme="dark"] .btn-outline {
+            background: #222d3a;
+        }
+        html[data-theme="dark"] .btn-danger {
+            color: #ff9d9d;
+            border-color: #5c3232;
+        }
+        html[data-theme="dark"] .btn-danger:hover {
+            background: #3a2222;
+        }
+        html[data-theme="dark"] .btn-success {
+            background: #2b8c5e;
+            border-color: #2b8c5e;
+            color: #fff;
+        }
+
+        /* —— 搜索 —— */
+        html[data-theme="dark"] .search-box {
+            background: #222d3a;
+            border-color: #34455a;
+        }
+        html[data-theme="dark"] .search-box input {
+            color: #dfe9f5;
+        }
+        html[data-theme="dark"] .search-box i,
+        html[data-theme="dark"] .search-clear {
+            color: #8aa4c0;
+        }
+
+        /* —— 分类 / 重要性标签 —— */
+        html[data-theme="dark"] .category-tabs,
+        html[data-theme="dark"] .importance-tabs {
+            border-bottom-color: #2b3947;
+        }
+        html[data-theme="dark"] .category-wrapper {
+            background: #22303f;
+        }
+        html[data-theme="dark"] .category-tab {
+            color: #c2d2e4;
+        }
+        html[data-theme="dark"] .category-wrapper.active {
+            background: #2a6fd6;
+            border-color: #2a6fd6;
+        }
+        html[data-theme="dark"] .cat-edit-btn,
+        html[data-theme="dark"] .cat-del-btn {
+            color: #8aa4c0;
+        }
+        html[data-theme="dark"] .add-category-btn {
+            border-color: #46586f;
+            color: #9dbde0;
+        }
+        html[data-theme="dark"] .add-category-btn:hover {
+            background: #2a3746;
+            border-color: #5c74a3;
+        }
+        html[data-theme="dark"] .imp-tab {
+            background: #22303f;
+            border-color: #34455a;
+            color: #c2d2e4;
+        }
+        html[data-theme="dark"] .imp-tab[data-imp="important"] {
+            background: #452a28;
+            border-color: #6b3a35;
+            color: #f0a99f;
+        }
+        html[data-theme="dark"] .imp-tab[data-imp="important"].active {
+            background: #6b3a35;
+            border-color: #93504a;
+            color: #ffd9d2;
+        }
+        html[data-theme="dark"] .imp-tab[data-imp="normal"] {
+            background: #22374f;
+            border-color: #35516f;
+            color: #a5c8ea;
+        }
+        html[data-theme="dark"] .imp-tab[data-imp="normal"].active {
+            background: #2f5a80;
+            border-color: #4a6d94;
+            color: #d3e6fa;
+        }
+        html[data-theme="dark"] .imp-tab[data-imp="favorite"] {
+            background: #453b22;
+            border-color: #6b5a35;
+            color: #f0d59f;
+        }
+        html[data-theme="dark"] .imp-tab[data-imp="favorite"].active {
+            background: #6b5a35;
+            border-color: #937b45;
+            color: #ffeec2;
+        }
+        html[data-theme="dark"] .imp-tab[data-imp="全部"].active {
+            background: #2a6fd6;
+            border-color: #2a6fd6;
+            color: #fff;
+        }
+
+        /* —— 问答卡片 —— */
+        html[data-theme="dark"] .qa-item {
+            background: #1f2833;
+            border-color: #2c3947;
+            box-shadow: 0 4px 8px -4px rgba(0, 0, 0, 0.5);
+        }
+        html[data-theme="dark"] .qa-item:hover {
+            border-color: #3d5064;
+        }
+        html[data-theme="dark"] .qa-item.qa-selected {
+            background: #22364f;
+            border-color: #2a6fd6;
+        }
+        html[data-theme="dark"] .qa-question {
+            color: #e8eff8;
+        }
+        html[data-theme="dark"] .qa-meta {
+            color: #9db2c9;
+        }
+        html[data-theme="dark"] .qa-meta .time {
+            background: #26333f;
+            color: #a9c0d8;
+        }
+        html[data-theme="dark"] .qa-actions button {
+            color: #9db2c9;
+        }
+        html[data-theme="dark"] .qa-actions button:hover {
+            background: #2a3746;
+            color: #dfe9f5;
+        }
+        html[data-theme="dark"] .qa-actions .del-btn:hover {
+            background: #432727;
+            color: #ff9d9d;
+        }
+        html[data-theme="dark"] .qa-answer {
+            color: #cfdcea;
+            border-left-color: #3d5064;
+        }
+        html[data-theme="dark"] .qa-answer .answer-label {
+            color: #8fb4dc;
+        }
+        html[data-theme="dark"] .qa-answer .answer-content {
+            color: #cfdcea;
+        }
+        html[data-theme="dark"] .qa-answer .answer-content blockquote {
+            color: #9db2c9;
+            border-left-color: #2a6fd6;
+        }
+        html[data-theme="dark"] .qa-footer {
+            border-top-color: #2b3947;
+        }
+        html[data-theme="dark"] .badge-icon {
+            background: #22303f;
+            border-color: #34455a;
+            color: #c2d2e4;
+        }
+        html[data-theme="dark"] .badge-icon.important {
+            background: #452a28;
+            border-color: #6b3a35;
+            color: #f0a99f;
+        }
+        html[data-theme="dark"] .badge-icon.normal {
+            background: #22374f;
+            border-color: #35516f;
+            color: #a5c8ea;
+        }
+        html[data-theme="dark"] .badge-icon.favorite {
+            background: #453b22;
+            border-color: #6b5a35;
+            color: #f0d59f;
+        }
+        html[data-theme="dark"] .qa-category-select,
+        html[data-theme="dark"] .batch-bar select,
+        html[data-theme="dark"] .editor-toolbar select,
+        html[data-theme="dark"] .q-edit-input,
+        html[data-theme="dark"] .add-qa-row .field-group input,
+        html[data-theme="dark"] .add-qa-row .field-group select,
+        html[data-theme="dark"] .page-size-wrap select {
+            background: #222d3a;
+            border-color: #34455a;
+            color: #dfe9f5;
+        }
+        html[data-theme="dark"] .highlight {
+            background: #8a6d16;
+            color: #fff6d8;
+        }
+        html[data-theme="dark"] .empty-message {
+            background: #1b232d;
+            border-color: #34455a;
+            color: #8aa4c0;
+        }
+
+        /* —— 编辑器 —— */
+        html[data-theme="dark"] .editor-toolbar {
+            background: #22303f;
+            border-color: #34455a;
+        }
+        html[data-theme="dark"] .editor-toolbar button {
+            color: #c2d2e4;
+        }
+        html[data-theme="dark"] .editor-toolbar button:hover {
+            background: #2a3746;
+            border-color: #46586f;
+        }
+        html[data-theme="dark"] .editor-toolbar button.active {
+            background: #34455a;
+            border-color: #5c74a3;
+        }
+        html[data-theme="dark"] .editor-toolbar .separator {
+            background: #34455a;
+        }
+        html[data-theme="dark"] .qa-answer-editor {
+            background: #1b232d;
+            border-color: #34455a;
+            color: #dfe9f5;
+        }
+        html[data-theme="dark"] .qa-answer-editor blockquote {
+            color: #9db2c9;
+        }
+        html[data-theme="dark"] .add-qa-row {
+            background: #1b232d;
+            border-color: #2c3947;
+        }
+        html[data-theme="dark"] .editor-hint {
+            color: #6f8aa6;
+        }
+
+        /* —— 批量条 / 分页 —— */
+        html[data-theme="dark"] .batch-bar {
+            background: #22303f;
+            border-color: #34455a;
+        }
+        html[data-theme="dark"] .batch-bar .batch-checkall {
+            color: #d6e2f0;
+        }
+        html[data-theme="dark"] .batch-count {
+            color: #9db2c9;
+        }
+        html[data-theme="dark"] .batch-count b {
+            color: #6ea6f0;
+        }
+        html[data-theme="dark"] .batch-bar .btn-outline {
+            background: #222d3a;
+            color: #d6e2f0;
+        }
+        html[data-theme="dark"] .batch-bar .btn-danger {
+            background: #3a2222;
+            color: #ff9d9d;
+            border-color: #6b3a3a;
+        }
+        html[data-theme="dark"] .batch-bar .btn-danger:hover {
+            background: #4a2828;
+            color: #ffc0c0;
+            border-color: #8a4a4a;
+        }
+        html[data-theme="dark"] .batch-bar .bb-sep {
+            background: #34455a;
+        }
+        html[data-theme="dark"] .batch-tip {
+            color: #6f8aa6;
+        }
+        html[data-theme="dark"] .pager-btn {
+            background: #222d3a;
+            border-color: #34455a;
+            color: #c2d2e4;
+        }
+        html[data-theme="dark"] .pager-btn:hover:not(:disabled):not(.active) {
+            background: #2a3746;
+            border-color: #46586f;
+        }
+        html[data-theme="dark"] .pager-btn.active {
+            background: #2a6fd6;
+            border-color: #2a6fd6;
+            color: #fff;
+        }
+        html[data-theme="dark"] .pager-info,
+        html[data-theme="dark"] .page-size-wrap {
+            color: #9db2c9;
+        }
+        html[data-theme="dark"] .pager-info b {
+            color: #6ea6f0;
+        }
+
+        /* —— 图片浮层 —— */
+        html[data-theme="dark"] .img-toolbar {
+            background: #2a3746;
+            border-color: #46586f;
+            color: #dfe9f5;
+        }
+        html[data-theme="dark"] .img-toolbar .img-size-label {
+            color: #c2d2e4;
+        }
+        html[data-theme="dark"] .img-toolbar .img-tb-btn:hover {
+            background: #34455a;
+        }
+        html[data-theme="dark"] .img-resize-handle {
+            background: #6ea6f0;
+            border-color: #fff;
+        }
+        html[data-theme="dark"] .img-drop-indicator,
+        html[data-theme="dark"] .img-drop-indicator::before {
+            background: #6ea6f0;
+        }
+        html[data-theme="dark"] .img-lightbox {
+            background: rgba(0, 0, 0, 0.88);
+        }
+
+        /* —— 下拉的 <option>：UA 默认白底，不覆盖就是「白底 + 亮字」= 看不见 —— */
+        html[data-theme="dark"] select option,
+        html[data-theme="dark"] option {
+            background: #222d3a;
+            color: #dfe9f5;
+        }
+        html[data-theme="dark"] .new-cat-select {
+            background: #222d3a;
+            border-color: #34455a;
+            color: #dfe9f5;
+        }
+        html[data-theme="dark"] .qa-cat-tag {
+            color: #8fb4dc;
+        }
+        html[data-theme="dark"] .empty-answer {
+            color: #6f8aa6;
+        }
+        html[data-theme="dark"] .qa-actions button {
+            border-color: transparent;
+        }
+        html[data-theme="dark"] .qa-actions button:hover {
+            border-color: #46586f;
+        }
+        html[data-theme="dark"] .qa-actions .del-btn {
+            color: #f0a99f;
+        }
+        html[data-theme="dark"] .qa-actions .del-btn:hover {
+            background: #432727;
+            border-color: #6b3a35;
+        }
     </style>
 </head>
 <body>
@@ -1111,23 +1767,61 @@
                 <button class="btn btn-outline" id="exportCacheBtn"><i class="fas fa-download"></i> 导出缓存</button>
                 <button class="btn btn-outline" id="importCacheBtn"><i class="fas fa-upload"></i> 导入缓存</button>
                 <button class="btn btn-outline" id="clearAllBtn"><i class="fas fa-trash-alt"></i> 清空全部</button>
+                <button class="btn btn-outline" id="batchSelectBtn" title="进入批量选择模式：可勾选多条，统一改分类或导出">
+                    <svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><rect x="1.5" y="2.4" width="13" height="11.2" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M4.4 8.2l2.3 2.3 4.9-5.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    批量选择
+                </button>
+                <button class="btn btn-outline" id="themeToggleBtn" title="切换明亮 / 暗黑主题">
+                    <svg id="themeIcon" viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;">
+                        <path id="themeIconPath" d="M13.2 9.8A5.6 5.6 0 0 1 6.2 2.8a5.8 5.8 0 1 0 7 7z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>
+                    </svg>
+                    <span id="themeLabel">暗黑</span>
+                </button>
                 <div class="search-box">
                     <i class="fas fa-search"></i>
                     <input type="text" id="searchInput" placeholder="搜索问答..." />
-                    <button class="search-clear" id="searchClear"><i class="fas fa-times-circle"></i></button>
+                    <button class="search-clear" id="searchClear" title="清空搜索"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.35"/><path d="M5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg></button>
                 </div>
             </div>
         </div>
 
         <div class="importance-tabs" id="importanceTabsContainer"></div>
         <div class="category-tabs" id="categoryTabsContainer"></div>
+
+        <!-- ===== 批量操作条（进入批量选择模式后才出现） ===== -->
+        <div class="batch-bar hidden" id="batchBar">
+            <label class="batch-checkall"><input type="checkbox" id="batchCheckAll"><span id="batchCheckAllLabel">全选</span></label>
+            <span class="batch-count">已选 <b id="batchCount">0</b> 条</span>
+            <span class="bb-sep"></span>
+            <select id="batchCategorySelect" title="批量移动到该分类"></select>
+            <button class="btn btn-primary" id="batchApplyCatBtn">改分类</button>
+            <span class="bb-sep"></span>
+            <button class="btn btn-outline" id="batchExportBtn">
+                <svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M2 2.6h7.6L14 7v6.4H2z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M9.4 2.6V7H14" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/></svg>
+                导出Word
+            </button>
+            <button class="btn btn-danger" id="batchDeleteBtn" title="删除所有勾选的问答（删完可点「撤销删除」找回）">
+                <svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M2.8 4.2h10.4M6.4 2.4h3.2" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M4.2 4.2l.7 8.2a1.2 1.2 0 0 0 1.2 1.1h3.8a1.2 1.2 0 0 0 1.2-1.1l.7-8.2" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M6.6 6.8v4.4M9.4 6.8v4.4" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
+                批量删除
+            </button>
+            <button class="btn btn-outline hidden" id="batchUndoBtn" title="把上一次批量删除的问答放回去">
+                <svg viewBox="0 0 16 16" aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;"><path d="M3.2 8a4.8 4.8 0 1 0 4.8-4.8" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M3.2 3.6V8h4.4" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                撤销删除
+            </button>
+            <button class="btn btn-outline" id="batchExitBtn">退出选择</button>
+            <span class="batch-tip">「全选」只作用于当前筛选出来的条目</span>
+        </div>
+
         <div id="qaListContainer" class="qa-list"></div>
+
+        <!-- ===== 分页（超过每页数量时出现） ===== -->
+        <div class="pagination hidden" id="pagination"></div>
 
         <!-- ===== 新增问答行（带富文本编辑器） ===== -->
         <div class="add-qa-row hidden" id="addQaRow">
             <div class="field-group">
                 <input type="text" id="newQuestionInput" placeholder="问题标题" />
-                <select id="newCategorySelect" style="border-radius:40px;padding:10px 18px;border:1px solid #d4e0ee;background:white;font-size:14px;"></select>
+                <select id="newCategorySelect" class="new-cat-select"></select>
             </div>
             <div class="editor-wrapper">
                 <!-- 工具栏（由 JS 统一渲染，新增/编辑两处共用同一份模板） -->
@@ -1159,6 +1853,14 @@
             let searchKeyword = '';
             let nextId = 1000;
             let lastEditTime = new Date();
+            // —— 批量选择 ——
+            let selectMode = false;          // 是否处于批量选择模式
+            const selectedIds = new Set();   // 勾选中的问答 id
+            // —— 分页 ——
+            let pageSize = 10;               // 每页条数：10 / 20 / 30
+            let currentPage = 1;             // 当前页码（从 1 开始）
+            // —— 主题 ——
+            let theme = 'light';             // light | dark
 
             // DOM 引用
             const container = document.getElementById('qaListContainer');
@@ -1179,6 +1881,25 @@
             const clearAllBtn = document.getElementById('clearAllBtn');
             const searchInput = document.getElementById('searchInput');
             const searchClear = document.getElementById('searchClear');
+            // —— 批量选择相关 DOM ——
+            const batchSelectBtn = document.getElementById('batchSelectBtn');
+            const batchBar = document.getElementById('batchBar');
+            const batchCheckAll = document.getElementById('batchCheckAll');
+            const batchCheckAllLabel = document.getElementById('batchCheckAllLabel');
+            const batchCount = document.getElementById('batchCount');
+            const batchCategorySelect = document.getElementById('batchCategorySelect');
+            const batchApplyCatBtn = document.getElementById('batchApplyCatBtn');
+            const batchExportBtn = document.getElementById('batchExportBtn');
+            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+            const batchUndoBtn = document.getElementById('batchUndoBtn');
+            const batchExitBtn = document.getElementById('batchExitBtn');
+            // —— 批量删除的撤销缓冲：只存被删掉的条目 + 原下标，撤销时按原位插回 ——
+            let undoBuffer = [];
+            // —— 分页 / 主题相关 DOM ——
+            const pagination = document.getElementById('pagination');
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const themeLabel = document.getElementById('themeLabel');
+            const themeIconPath = document.getElementById('themeIconPath');
 
             // ============================================================
             //  工具函数
@@ -1817,6 +2538,51 @@
             }
 
             // ============================================================
+            //  偏好设置（主题 / 每页条数）—— 独立于问答数据，不进导出缓存
+            // ============================================================
+            function savePrefs() {
+                try {
+                    localStorage.setItem('qaTheme', theme);
+                    localStorage.setItem('qaPageSize', String(pageSize));
+                } catch (e) {
+                    console.warn('偏好保存失败:', e);
+                }
+            }
+
+            function loadPrefs() {
+                try {
+                    const t = localStorage.getItem('qaTheme');
+                    if (t === 'dark' || t === 'light') theme = t;
+                    const ps = parseInt(localStorage.getItem('qaPageSize'), 10);
+                    if (ps === 10 || ps === 20 || ps === 30) pageSize = ps;
+                } catch (e) {
+                    console.warn('偏好读取失败:', e);
+                }
+            }
+
+            /** 应用主题：切 html[data-theme]，并同步按钮文案与图标 */
+            function applyTheme(next) {
+                theme = (next === 'dark') ? 'dark' : 'light';
+                const dark = theme === 'dark';
+                document.documentElement.setAttribute('data-theme', theme);
+                if (themeLabel) themeLabel.textContent = dark ? '明亮' : '暗黑';
+                if (themeToggleBtn) {
+                    themeToggleBtn.title = dark ? '当前：暗黑模式，点此切换为明亮' : '当前：明亮模式，点此切换为暗黑';
+                }
+                if (themeIconPath) {
+                    // 暗黑态显示月亮（提示"可切回明亮"），明亮态显示太阳
+                    themeIconPath.setAttribute('d', dark
+                        ? 'M13.2 9.8A5.6 5.6 0 0 1 6.2 2.8a5.8 5.8 0 1 0 7 7z'
+                        : 'M8 4.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6zM8 0.9v1.6M8 13.5v1.6M0.9 8h1.6M13.5 8h1.6M3 3l1.1 1.1M11.9 11.9L13 13M13 3l-1.1 1.1M4.1 11.9L3 13');
+                }
+                savePrefs();
+            }
+
+            function toggleTheme() {
+                applyTheme(theme === 'dark' ? 'light' : 'dark');
+            }
+
+            // ============================================================
             //  生成案例问答
             // ============================================================
             function getSampleData() {
@@ -1914,7 +2680,15 @@
                 layBL: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="5" width="7" height="6" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M1 2.6h14M1 13.4h14" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>',
                 // 自由漫游（四向箭头）/ 回归文档流（箭头回落）
                 free: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.4v13.2M1.4 8h13.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M8 1.4L5.6 3.9M8 1.4l2.4 2.5M8 14.6l-2.4-2.5M8 14.6l2.4-2.5M1.4 8l2.5-2.4M1.4 8l2.5 2.4M14.6 8l-2.5-2.4M14.6 8l-2.5 2.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-                inline: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.2" y="4.4" width="13.6" height="7.2" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4 8h8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+                inline: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.2" y="4.4" width="13.6" height="7.2" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4 8h8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+                // 卡片操作区：改问题（笔+下划线）/ 编辑回答（笔）/ 删除（垃圾桶）
+                penTitle: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 11.4l6.9-6.9 2.1 2.1-6.9 6.9H2.4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8.1 5.7l1.3-1.3 2.1 2.1-1.3 1.3z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M2 14.6h12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+                pen: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 11.4l6.9-6.9 2.1 2.1-6.9 6.9H2.4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8.1 5.7l1.3-1.3 2.1 2.1-1.3 1.3z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+                trash: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 4.6h10.8M6 4.6V2.9h4v1.7M4.1 4.6l.8 8.5h6.2l.8-8.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                question: '<svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><circle cx="8" cy="8" r="6.8" fill="none" stroke="currentColor" stroke-width="1.35"/><path d="M6.1 6.2a1.95 1.95 0 1 1 2.7 1.8c-.6.25-.9.8-.9 1.4v.4" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><circle cx="8.05" cy="11.7" r=".85" fill="currentColor"/></svg>',
+                comment: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M1.6 3.4h12.8v7.2H7.4L3.4 14V10.6H1.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+                tag: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8.6 1.6H14v5.4l-7 7-5.4-5.4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="11.2" cy="4.8" r="1" fill="currentColor"/></svg>',
+                inbox: '<svg viewBox="0 0 16 16" width="28" height="28" aria-hidden="true" style="display:block;margin:0 auto 12px;opacity:.5;"><path d="M1.6 9.4L3.9 2.4h8.2l2.3 7v4.2H1.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M1.6 9.4h3.6l1 1.8h4.6l1-1.8h3.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>'
             };
 
             // 图片排版模式：class 名 ↔ 工具条按钮
@@ -2467,6 +3241,7 @@
                         `<i class="fas ${type.icon}"></i> ${type.label} <span class="badge">${count}</span>`;
                     tab.addEventListener('click', function() {
                         currentImportance = this.dataset.imp;
+                        resetPage();                 // 换了筛选条件，回到第 1 页
                         renderImportanceTabs();
                         renderQaList();
                     });
@@ -2489,6 +3264,7 @@
                     tab.addEventListener('click', function(e) {
                         e.stopPropagation();
                         currentCategory = cat;
+                        resetPage();                 // 换了筛选条件，回到第 1 页
                         renderTabs();
                         renderQaList();
                     });
@@ -2497,7 +3273,7 @@
                     if (cat !== '全部') {
                         const editBtn = document.createElement('button');
                         editBtn.className = 'cat-edit-btn';
-                        editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+                        editBtn.innerHTML = ICON.pen;
                         editBtn.title = '编辑分类名称';
                         editBtn.addEventListener('click', function(e) {
                             e.stopPropagation();
@@ -2513,7 +3289,7 @@
                         if (cat !== '默认') {
                             const delBtn = document.createElement('button');
                             delBtn.className = 'cat-del-btn';
-                            delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                            delBtn.innerHTML = ICON.trash;
                             delBtn.title = '删除分类';
                             delBtn.addEventListener('click', function(e) {
                                 e.stopPropagation();
@@ -2534,9 +3310,11 @@
                     if (newCat && newCat.trim() !== '' && !categories.includes(newCat.trim())) {
                         categories.push(newCat.trim());
                         currentCategory = newCat.trim();
+                        resetPage();
                         renderTabs();
                         renderQaList();
                         populateCategorySelect();
+                        populateBatchCategorySelect();   // 批量下拉要跟着刷新，否则新分类选不到
                         saveData();
                     } else if (newCat && categories.includes(newCat.trim())) {
                         alert('分类已存在');
@@ -2562,7 +3340,140 @@
                 renderQaList();
                 renderImportanceTabs();
                 populateCategorySelect();
+                populateBatchCategorySelect();
                 saveData();
+            }
+
+            // ============================================================
+            //  【批量选择】勾选 / 全选 / 批量改分类 / 批量导出
+            // ============================================================
+            function populateBatchCategorySelect() {
+                const keep = batchCategorySelect.value;
+                batchCategorySelect.innerHTML = '';
+                const ph = document.createElement('option');
+                ph.value = '';
+                ph.textContent = '移动到分类…';
+                batchCategorySelect.appendChild(ph);
+                categories.forEach(cat => {
+                    if (cat === '全部') return;
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    batchCategorySelect.appendChild(opt);
+                });
+                batchCategorySelect.value = (keep && categories.includes(keep)) ? keep : '';
+            }
+
+            /** 当前筛选结果（分类 + 重要性 + 搜索）的 id —— 「全选」只作用于这些 */
+            function visibleIds() {
+                return getFilteredData().map(i => i.id);
+            }
+
+            function updateBatchBar() {
+                if (!batchBar) return;
+                batchCount.textContent = String(selectedIds.size);
+                const vis = visibleIds();
+                const allChecked = vis.length > 0 && vis.every(id => selectedIds.has(id));
+                const someChecked = vis.some(id => selectedIds.has(id));
+                batchCheckAll.checked = allChecked;
+                batchCheckAll.indeterminate = !allChecked && someChecked;
+                batchCheckAllLabel.textContent = allChecked ? '取消全选' : '全选';
+            }
+
+            function setSelectMode(on) {
+                selectMode = !!on;
+                if (!selectMode) selectedIds.clear();
+                batchBar.classList.toggle('hidden', !selectMode);
+                batchSelectBtn.classList.toggle('btn-primary', selectMode);
+                batchSelectBtn.classList.toggle('btn-outline', !selectMode);
+                if (selectMode) populateBatchCategorySelect();
+                updateBatchBar();
+                renderQaList();
+            }
+
+            function batchChangeCategory() {
+                const cat = batchCategorySelect.value;
+                if (!cat) { alert('请先选择要移动到的分类'); return; }
+                if (selectedIds.size === 0) { alert('还没有勾选任何问答'); return; }
+                if (!confirm(`确定把选中的 ${selectedIds.size} 条问答移动到分类“${cat}”吗？`)) return;
+
+                let changed = 0;
+                qaData.forEach(item => {
+                    if (selectedIds.has(item.id) && item.category !== cat) {
+                        item.category = cat;
+                        item.time = formatTime(new Date());
+                        changed++;
+                    }
+                });
+                if (!categories.includes(cat)) categories.push(cat);
+                lastEditTime = new Date();
+                updateLastSaved();
+                refreshCategories();
+                if (!categories.includes(currentCategory) && currentCategory !== '全部') currentCategory = '全部';
+                renderAll();
+                saveData();
+                alert(`✅ 已把 ${changed} 条问答移动到「${cat}」`);
+            }
+
+            /** 撤销按钮的显示/隐藏（有被删条目时才出现） */
+            function updateUndoBtn() {
+                if (!batchUndoBtn) return;
+                batchUndoBtn.classList.toggle('hidden', undoBuffer.length === 0);
+            }
+
+            /** 批量删除：删掉所有勾选的问答，并把它们暂存进 undoBuffer 以便撤销 */
+            function batchDelete() {
+                if (selectedIds.size === 0) { alert('请先勾选要删除的问答'); return; }
+
+                // 按原下标收集待删条目，倒序删除，保证下标不串位
+                const picked = [];
+                qaData.forEach((item, idx) => { if (selectedIds.has(item.id)) picked.push({ item: item, index: idx }); });
+                if (picked.length === 0) { alert('选中的条目已不在当前数据中'); return; }
+
+                const preview = picked.slice(0, 5).map(p => '· ' + p.item.question).join('\n');
+                const more = picked.length > 5 ? `\n… 以及另外 ${picked.length - 5} 条` : '';
+                if (!confirm(
+                    `⚠️ 确定删除选中的 ${picked.length} 条问答吗？\n\n${preview}${more}\n\n` +
+                    `删完可以点「撤销删除」把它们放回去。`
+                )) return;
+
+                // 倒序 splice，下标不会互相影响
+                for (let i = picked.length - 1; i >= 0; i--) qaData.splice(picked[i].index, 1);
+
+                undoBuffer = picked;          // 只保留最近一次批量删除
+                selectedIds.clear();
+                lastEditTime = new Date();
+                updateLastSaved();
+                refreshCategories();
+                if (!categories.includes(currentCategory) && currentCategory !== '全部') currentCategory = '全部';
+                renderAll();
+                updateUndoBtn();
+                saveData();
+                alert(`🗑️ 已删除 ${picked.length} 条问答。\n\n如需恢复，点批量条上的「撤销删除」。`);
+            }
+
+            /** 撤销上一次批量删除：按原下标把条目插回原位 */
+            function undoBatchDelete() {
+                if (undoBuffer.length === 0) { alert('没有可撤销的批量删除'); return; }
+                const back = undoBuffer.slice().sort((a, b) => a.index - b.index);
+                back.forEach(p => {
+                    const at = Math.min(Math.max(p.index, 0), qaData.length);
+                    qaData.splice(at, 0, p.item);
+                });
+                undoBuffer = [];
+                lastEditTime = new Date();
+                updateLastSaved();
+                refreshCategories();
+                renderAll();
+                updateUndoBtn();
+                saveData();
+                alert(`↩️ 已恢复 ${back.length} 条问答。`);
+            }
+
+            /** 数据被整体替换 / 清空时，撤销缓冲失效 */
+            function clearUndoBuffer() {
+                undoBuffer = [];
+                updateUndoBtn();
             }
 
             function renderQaList() {
@@ -2570,12 +3481,23 @@
                 const filtered = getFilteredData();
                 if (filtered.length === 0) {
                     container.innerHTML =
-                        `<div class="empty-message"><i class="fas fa-inbox" style="font-size:28px;display:block;margin-bottom:12px;opacity:0.5;"></i> ${searchKeyword.trim() ? '没有匹配的问答' : '当前分类没有问答，点击 "新增问答" 创建'}</div>`;
+                        `<div class="empty-message">${ICON.inbox}${searchKeyword.trim() ? '没有匹配的问答' : '当前分类没有问答，点击 "新增问答" 创建'}</div>`;
+                    renderPagination(0, 1);
+                    updateBatchBar();
                     return;
                 }
+
+                // —— 分页：先夹取页码，再切片 ——
+                const total = filtered.length;
+                const totalPages = Math.max(1, Math.ceil(total / pageSize));
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+                const start = (currentPage - 1) * pageSize;
+                const pageItems = filtered.slice(start, start + pageSize);
+
                 const fragment = document.createDocumentFragment();
                 const kw = searchKeyword.trim();
-                filtered.forEach(item => {
+                pageItems.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'qa-item';
                     div.dataset.id = item.id;
@@ -2585,14 +3507,34 @@
                     const qDiv = document.createElement('div');
                     qDiv.className = 'qa-question';
                     const qHtml = kw ? highlightText(escapeHtml(item.question), kw) : escapeHtml(item.question);
-                    qDiv.innerHTML = `<span class="q-icon"><i class="fas fa-question-circle"></i></span> ${qHtml}`;
+                    qDiv.innerHTML = `<span class="q-icon">${ICON.question}</span> ${qHtml}`;
+
+                    // —— 批量选择：卡片头部最左侧的复选框 ——
+                    if (selectMode) {
+                        if (selectedIds.has(item.id)) div.classList.add('qa-selected');
+                        const cbWrap = document.createElement('label');
+                        cbWrap.className = 'qa-select';
+                        cbWrap.title = '选择这条问答';
+                        const cb = document.createElement('input');
+                        cb.type = 'checkbox';
+                        cb.checked = selectedIds.has(item.id);
+                        cb.addEventListener('change', function() {
+                            if (this.checked) selectedIds.add(item.id);
+                            else selectedIds.delete(item.id);
+                            div.classList.toggle('qa-selected', this.checked);
+                            updateBatchBar();
+                        });
+                        cbWrap.appendChild(cb);
+                        header.appendChild(cbWrap);
+                    }
 
                     const meta = document.createElement('div');
                     meta.className = 'qa-meta';
                     meta.innerHTML = `<span class="time"><i class="far fa-calendar-alt"></i> ${item.time || '--'}</span>
                           <span class="qa-actions">
-                            <button class="edit-btn" title="编辑回答"><i class="fas fa-pen"></i></button>
-                            <button class="del-btn" title="删除"><i class="fas fa-trash"></i></button>
+                            <button class="edit-q-btn" title="编辑问题标题（也可双击标题）">${ICON.penTitle}<span>改问题</span></button>
+                            <button class="edit-btn" title="编辑回答内容">${ICON.pen}<span>编辑回答</span></button>
+                            <button class="del-btn" title="删除这条问答">${ICON.trash}<span>删除</span></button>
                           </span>`;
                     header.appendChild(qDiv);
                     header.appendChild(meta);
@@ -2606,8 +3548,8 @@
                     const displayHtml = kw ? highlightHtml(answerHtml, kw) : answerHtml;
                     // 含自由定位图片时才切成定位容器，普通回答排版保持原样
                     if (displayHtml.indexOf('qa-img-free') > -1) answerContent.classList.add('free-layer');
-                    answerContent.innerHTML = displayHtml || '<span style="color:#aaa;">（空回答）</span>';
-                    ansDiv.innerHTML = `<span class="answer-label"><i class="far fa-comment"></i> 回答</span> `;
+                    answerContent.innerHTML = displayHtml || '<span class="empty-answer">（空回答）</span>';
+                    ansDiv.innerHTML = `<span class="answer-label">${ICON.comment} 回答</span> `;
                     ansDiv.appendChild(answerContent);
 
                     const footer = document.createElement('div');
@@ -2662,7 +3604,7 @@
                     catWrapper.style.display = 'inline-flex';
                     catWrapper.style.alignItems = 'center';
                     catWrapper.style.gap = '4px';
-                    catWrapper.innerHTML = `<i class="fas fa-tag" style="color:#22558a;font-size:13px;"></i>`;
+                    catWrapper.innerHTML = `<span class="qa-cat-tag">${ICON.tag}</span>`;
                     catWrapper.appendChild(catSelect);
 
                     footer.appendChild(badgeGroup);
@@ -2677,6 +3619,7 @@
                         e.stopPropagation();
                         if (confirm(`确定删除问答：“${item.question}” ？`)) {
                             qaData = qaData.filter(q => q.id !== item.id);
+                            selectedIds.delete(item.id);   // 同步清掉勾选，避免残留幽灵 id
                             refreshCategories();
                             if (!categories.includes(currentCategory) && currentCategory !== '全部')
                                 currentCategory = '全部';
@@ -2689,6 +3632,73 @@
                             saveData();
                         }
                     });
+
+                    // —— 【新增】问题标题行内编辑 ——
+                    const startQuestionEdit = function() {
+                        if (qDiv.querySelector('.q-edit-box')) return;   // 已在编辑中
+                        const oldHtml = qDiv.innerHTML;
+
+                        qDiv.innerHTML = '';
+                        const box = document.createElement('div');
+                        box.className = 'q-edit-box';
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'q-edit-input';
+                        input.value = item.question;
+                        input.placeholder = '问题标题';
+                        const okBtn = document.createElement('button');
+                        okBtn.className = 'btn btn-primary';
+                        okBtn.innerHTML = '<i class="fas fa-check"></i> 保存';
+                        const cancelBtn = document.createElement('button');
+                        cancelBtn.className = 'btn btn-outline';
+                        cancelBtn.textContent = '取消';
+                        box.appendChild(input);
+                        box.appendChild(okBtn);
+                        box.appendChild(cancelBtn);
+                        qDiv.appendChild(box);
+                        input.focus();
+                        input.select();
+
+                        const finish = function(save) {
+                            if (save) {
+                                const v = input.value.trim();
+                                if (!v) { alert('问题标题不能为空'); input.focus(); return; }
+                                if (v !== item.question) {
+                                    item.question = v;
+                                    item.time = formatTime(new Date());
+                                    lastEditTime = new Date();
+                                    updateLastSaved();
+                                    saveData();
+                                }
+                                renderQaList();
+                                renderTabs();
+                            } else {
+                                qDiv.innerHTML = oldHtml;
+                                qDiv.addEventListener('dblclick', onQDbl);
+                            }
+                        };
+
+                        okBtn.addEventListener('click', function(e) { e.stopPropagation(); finish(true); });
+                        cancelBtn.addEventListener('click', function(e) { e.stopPropagation(); finish(false); });
+                        input.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+                            else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+                        });
+                    };
+
+                    const onQDbl = function(e) {
+                        e.stopPropagation();
+                        startQuestionEdit();
+                    };
+                    qDiv.addEventListener('dblclick', onQDbl);
+
+                    const qEditBtn = div.querySelector('.edit-q-btn');
+                    if (qEditBtn) {
+                        qEditBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            startQuestionEdit();
+                        });
+                    }
 
                     const editBtn = div.querySelector('.edit-btn');
                     editBtn.addEventListener('click', function(e) {
@@ -2778,6 +3788,120 @@
                         }
                     });
                 });
+                renderPagination(total, totalPages);
+                updateBatchBar();
+            }
+
+            // ============================================================
+            //  【新增】分页：每页条数 + 翻页
+            // ============================================================
+            function resetPage() {
+                currentPage = 1;
+            }
+
+            /** @param {number} total 筛选后的总条数  @param {number} totalPages 总页数 */
+            function renderPagination(total, totalPages) {
+                if (!pagination) return;
+                pagination.innerHTML = '';
+                if (total === 0) { pagination.classList.add('hidden'); return; }
+
+                // 只有一页时也要显示「每页 N 条」选择器，方便随时调整
+                const needPager = total > pageSize;
+                pagination.classList.remove('hidden');
+
+                // —— 每页条数 ——
+                const sizeWrap = document.createElement('span');
+                sizeWrap.className = 'page-size-wrap';
+                sizeWrap.innerHTML = '<span>每页</span>';
+                const sel = document.createElement('select');
+                sel.id = 'pageSizeSelect';
+                sel.title = '每页显示的问答数量';
+                [10, 20, 30].forEach(n => {
+                    const o = document.createElement('option');
+                    o.value = String(n);
+                    o.textContent = String(n);
+                    if (n === pageSize) o.selected = true;
+                    sel.appendChild(o);
+                });
+                sel.addEventListener('change', function() {
+                    pageSize = parseInt(this.value, 10) || 10;
+                    currentPage = 1;                 // 换了每页条数，回到第一页
+                    savePrefs();
+                    renderQaList();
+                });
+                sizeWrap.appendChild(sel);
+                sizeWrap.appendChild(document.createTextNode('条'));
+                pagination.appendChild(sizeWrap);
+
+                // —— 统计信息 ——
+                const info = document.createElement('span');
+                info.className = 'pager-info';
+                const from = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+                const to = Math.min(currentPage * pageSize, total);
+                info.innerHTML = `共 <b>${total}</b> 条 · ${from}-${to} · 第 <b>${currentPage}</b>/<b>${totalPages}</b> 页`;
+                pagination.appendChild(info);
+
+                if (!needPager) return;
+
+                // —— 翻页按钮 ——
+                const mk = (label, page, opt) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'pager-btn' + (opt && opt.active ? ' active' : '');
+                    b.textContent = label;
+                    if (opt && opt.disabled) b.disabled = true;
+                    if (opt && opt.title) b.title = opt.title;
+                    if (!b.disabled) {
+                        b.addEventListener('click', function() {
+                            currentPage = page;
+                            renderQaList();
+                            scrollToListTop();
+                        });
+                    }
+                    return b;
+                };
+
+                pagination.appendChild(mk('«', 1, { disabled: currentPage === 1, title: '首页' }));
+                pagination.appendChild(mk('‹ 上一页', currentPage - 1, { disabled: currentPage === 1 }));
+
+                // 页码按钮：最多显示 5 个，中间用省略号
+                const win = 5;
+                let from2 = Math.max(1, currentPage - Math.floor(win / 2));
+                let to2 = Math.min(totalPages, from2 + win - 1);
+                from2 = Math.max(1, to2 - win + 1);
+                if (from2 > 1) {
+                    pagination.appendChild(mk('1', 1));
+                    if (from2 > 2) {
+                        const d = document.createElement('span');
+                        d.className = 'pager-dots';
+                        d.textContent = '…';
+                        pagination.appendChild(d);
+                    }
+                }
+                for (let p = from2; p <= to2; p++) {
+                    pagination.appendChild(mk(String(p), p, { active: p === currentPage }));
+                }
+                if (to2 < totalPages) {
+                    if (to2 < totalPages - 1) {
+                        const d = document.createElement('span');
+                        d.className = 'pager-dots';
+                        d.textContent = '…';
+                        pagination.appendChild(d);
+                    }
+                    pagination.appendChild(mk(String(totalPages), totalPages));
+                }
+
+                pagination.appendChild(mk('下一页 ›', currentPage + 1, { disabled: currentPage === totalPages }));
+                pagination.appendChild(mk('»', totalPages, { disabled: currentPage === totalPages, title: '末页' }));
+            }
+
+            function scrollToListTop() {
+                try {
+                    const y = container.getBoundingClientRect().top + window.scrollY - 12;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                } catch (e) {
+                    container.scrollIntoView({ block: 'start' });
+                }
             }
 
             // ============================================================
@@ -2786,6 +3910,7 @@
             searchInput.addEventListener('input', function() {
                 searchKeyword = this.value;
                 searchClear.classList.toggle('visible', searchKeyword.length > 0);
+                resetPage();                     // 搜索词变了，回到第 1 页
                 renderQaList();
             });
 
@@ -2793,6 +3918,7 @@
                 searchInput.value = '';
                 searchKeyword = '';
                 searchClear.classList.remove('visible');
+                resetPage();
                 renderQaList();
             });
 
@@ -2823,6 +3949,9 @@
                 newQuestion.value = '';
                 newAnswerEditor.innerHTML = '<p><br></p>';
                 renderTabs();
+                // 跳到新条目所在的那一页，避免"添加完看不见"
+                const idx = getFilteredData().findIndex(i => i.id === newItem.id);
+                currentPage = idx < 0 ? 1 : Math.floor(idx / pageSize) + 1;
                 renderQaList();
                 renderImportanceTabs();
                 populateCategorySelect();
@@ -2840,14 +3969,23 @@
             // ============================================================
             //  导出Word
             // ============================================================
-            function exportWord() {
-                if (qaData.length === 0) {
-                    alert('没有问答可以导出');
+            /**
+             * 导出 Word
+             * @param {Array<number>} [ids] 传入则只导出这些 id（批量导出），不传则导出全部
+             */
+            function exportWord(ids) {
+                let list = qaData;
+                if (ids && ids.length) {
+                    const pick = new Set(ids);
+                    list = qaData.filter(i => pick.has(i.id));
+                }
+                if (list.length === 0) {
+                    alert(ids ? '没有可导出的问答，请先勾选' : '没有问答可以导出');
                     return;
                 }
                 let htmlContent =
                     `<html><head><meta charset="UTF-8"><title>问答导出</title><style>body{font-family:'Segoe UI',Arial,sans-serif;padding:30px;}.qa{margin-bottom:30px;border-bottom:1px solid #ddd;padding-bottom:20px;}.q{font-weight:bold;font-size:20px;margin-bottom:8px;}.a{margin:8px 0 6px 20px;line-height:1.8;}.a img{max-width:100%;height:auto;display:block;margin:10px 0;}.a img.qa-img-export{position:static !important;float:none !important;left:auto !important;top:auto !important;display:block;margin:10px auto;}.meta{color:#4a6a8a;font-size:14px;margin-top:6px;}.cat{background:#eef3f9;padding:2px 14px;border-radius:20px;}ul,ol{padding-left:24px;}blockquote{border-left:4px solid #2a7de1;padding-left:16px;color:#4a6a8a;}</style></head><body><h1>📋 问答知识库 导出</h1><p>导出时间: ${formatTime(new Date())}</p>`;
-                qaData.forEach(item => {
+                list.forEach(item => {
                     // 自由定位图片在 Word 里会乱飞，导出时降级为顺序排列
                     const safeAnswer = (item.answer || '').replace(/qa-img-free/g, 'qa-img-export');
                     htmlContent +=
@@ -2857,7 +3995,8 @@
                 const blob = new Blob([htmlContent], { type: 'application/msword' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `问答导出_${formatTime(new Date()).replace(/[: ]/g,'_')}.doc`;
+                const scope = (ids && ids.length) ? `_选中${list.length}条` : '';
+                link.download = `问答导出${scope}_${formatTime(new Date()).replace(/[: ]/g,'_')}.doc`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -2870,12 +4009,15 @@
                 if (qaData.length === 0) return;
                 if (confirm('⚠️ 确定清空所有问答吗？')) {
                     qaData = [];
+                    selectedIds.clear();
+                    clearUndoBuffer();   // 全清了，之前暂存的删除记录也一起作废
                     categories = ['全部', '默认'];
                     currentCategory = '全部';
                     currentImportance = '全部';
                     searchKeyword = '';
                     searchInput.value = '';
                     searchClear.classList.remove('visible');
+                    resetPage();
                     lastEditTime = new Date();
                     updateLastSaved();
                     renderTabs();
@@ -2955,8 +4097,10 @@
                             }
                         }
 
-                        // 替换数据
+                        // 替换数据（旧 id 可能不存在了，勾选状态一并清空）
                         qaData = data.qaData;
+                        selectedIds.clear();
+                        clearUndoBuffer();   // 数据整体被替换，旧的撤销记录作废
                         categories = data.categories;
                         nextId = data.nextId;
                         if (data.lastEditTime) {
@@ -2971,6 +4115,7 @@
                         searchKeyword = '';
                         searchInput.value = '';
                         searchClear.classList.remove('visible');
+                        resetPage();
 
                         // 保存并刷新
                         saveData();
@@ -2998,6 +4143,8 @@
                 renderTabs();
                 renderQaList();
                 populateCategorySelect();
+                populateBatchCategorySelect();
+                updateBatchBar();
                 updateLastSaved();
             }
 
@@ -3012,8 +4159,41 @@
                 newAnswerEditor.innerHTML = '<p><br></p>';
             });
             confirmAddBtn.addEventListener('click', addNewQA);
-            exportBtn.addEventListener('click', exportWord);
+            // 注意：不能直接传 exportWord，否则 MouseEvent 会被当成 ids 参数
+            exportBtn.addEventListener('click', function() { exportWord(); });
             clearAllBtn.addEventListener('click', clearAll);
+
+            // ============================================================
+            //  批量选择：进入/退出、全选、改分类、导出
+            // ============================================================
+            batchSelectBtn.addEventListener('click', function() {
+                setSelectMode(!selectMode);
+            });
+            batchDeleteBtn.addEventListener('click', batchDelete);
+            batchUndoBtn.addEventListener('click', undoBatchDelete);
+            batchExitBtn.addEventListener('click', function() {
+                // 还有可撤销的删除时先提醒一句，避免用户退出后找不回来
+                if (undoBuffer.length > 0 &&
+                    !confirm(`还有 ${undoBuffer.length} 条刚删除的问答可以撤销，退出选择后将无法恢复。\n确定退出吗？`)) return;
+                clearUndoBuffer();
+                setSelectMode(false);
+            });
+            batchCheckAll.addEventListener('change', function() {
+                const vis = visibleIds();
+                if (this.checked) vis.forEach(id => selectedIds.add(id));
+                else vis.forEach(id => selectedIds.delete(id));
+                renderQaList();
+            });
+            batchApplyCatBtn.addEventListener('click', batchChangeCategory);
+            batchExportBtn.addEventListener('click', function() {
+                if (selectedIds.size === 0) { alert('请先勾选要导出的问答'); return; }
+                exportWord(Array.from(selectedIds));
+            });
+
+            // ============================================================
+            //  主题切换
+            // ============================================================
+            themeToggleBtn.addEventListener('click', toggleTheme);
 
             // 导出缓存
             exportCacheBtn.addEventListener('click', exportCache);
@@ -3071,6 +4251,8 @@
             //  启动
             // ============================================================
             initData();
+            loadPrefs();
+            applyTheme(theme);
             setupEditorToolbar();
             checkIconFont();
             renderAll();
