@@ -1150,6 +1150,18 @@
         .img-resize-handle.ne { right: -7px; top: -7px;    cursor: nesw-resize; }
         .img-resize-handle.sw { left: -7px;  bottom: -7px; cursor: nesw-resize; }
         .img-resize-handle.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+        /* 四条边的中点＝单向拉伸（方点，跟圆角的等比手柄区分开）：
+           拖左右只改宽度、拖上下只改高度，宽高比随意变 */
+        .img-resize-handle.n,
+        .img-resize-handle.s,
+        .img-resize-handle.e,
+        .img-resize-handle.w {
+            border-radius: 3px;
+        }
+        .img-resize-handle.n { left: 50%; top: -7px;    margin-left: -6.5px; cursor: ns-resize; }
+        .img-resize-handle.s { left: 50%; bottom: -7px; margin-left: -6.5px; cursor: ns-resize; }
+        .img-resize-handle.w { left: -7px;  top: 50%;   margin-top: -6.5px;  cursor: ew-resize; }
+        .img-resize-handle.e { right: -7px; top: 50%;   margin-top: -6.5px;  cursor: ew-resize; }
 
         .img-toolbar {
             position: absolute;
@@ -2412,6 +2424,67 @@
                 sel.addRange(r);
             }
 
+            /**
+             * 取一个安全插入点：
+             * - 选区在编辑器内 → 用它；否则退回保存的光标；再否则编辑器末尾
+             * - ⚠️ 选区没折叠时一律 collapse 到末尾。
+             *   这是「插第二张图时第一张不见了」的根因：点过图片或刚插完图后，
+             *   浏览器常常把那张图置于「选中」状态，而 insertHTML 的语义是
+             *   **用新内容替换选区** —— 于是第一张被第二张顶掉了。
+             *   先折叠，插入就永远是「在光标处新增」，不会吃掉任何已有内容。
+             */
+            function getInsertRange(editor) {
+                const sel = window.getSelection();
+                let range = null;
+                if (sel && sel.rangeCount > 0) {
+                    const r = sel.getRangeAt(0);
+                    if (editor.contains(r.commonAncestorContainer)) range = r.cloneRange();
+                }
+                if (!range && savedRange && editor.contains(savedRange.commonAncestorContainer)) {
+                    range = savedRange.cloneRange();
+                }
+                if (!range) {
+                    range = document.createRange();
+                    range.selectNodeContents(editor);
+                    range.collapse(false);
+                }
+                if (!range.collapsed) range.collapse(false);
+                return range;
+            }
+
+            /** 聚焦编辑器并把光标摆到安全插入点上 */
+            function focusInsertPoint(editor) {
+                // 先算插入点再 focus：focus() 可能把光标重置到开头，之后再算就白算了
+                const range = getInsertRange(editor);
+                editor.focus();
+                const sel = window.getSelection();
+                if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+                return range;
+            }
+
+            /** 插完收尾：浏览器若把刚插入的图片选中了，立刻折叠到它后面（下一张才不会顶掉它） */
+            function collapseCaretAfterInsert() {
+                const sel = window.getSelection();
+                if (!sel || sel.rangeCount === 0) return;
+                const r = sel.getRangeAt(0);
+                if (r.collapsed) return;
+                r.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(r);
+            }
+
+            /**
+             * 编辑器是不是「真的空的」（只剩占位用的空行）。
+             * ⚠️ 判断里必须算上图片：图片不产生文本，只查 textContent / innerText
+             *    会把「只有图片」误判成空的 —— 这是「第二张图顶掉第一张」的真凶。
+             */
+            function isEditorBlank(el) {
+                if (!el) return true;
+                if (el.querySelector('img')) return false;
+                const txt = (el.textContent || '').replace(/\u00a0/g, ' ').trim();
+                return txt === '';
+            }
+
             // ============================================================
             //  【新增】插入图片（支持多张）
             // ============================================================
@@ -2430,11 +2503,35 @@
                 input.click();
             }
 
+            /**
+             * 兜底插入：直接操作 DOM，绕开 execCommand 的「替换选区」语义。
+             * 只有当 execCommand 那条路没把图插进去（或吃掉了已有图片）时才用。
+             */
+            function insertImageNodeFallback(editor, dataUrl) {
+                const img = document.createElement('img');
+                img.className = 'qa-img';
+                img.src = dataUrl;
+                img.alt = '';
+                img.setAttribute('draggable', 'true');
+                const range = getInsertRange(editor);
+                try {
+                    range.insertNode(img);
+                } catch (err) {
+                    editor.appendChild(img);
+                }
+                const after = document.createRange();
+                after.setStartAfter(img);
+                after.collapse(true);
+                const sel = window.getSelection();
+                if (sel) { sel.removeAllRanges(); sel.addRange(after); }
+                return img;
+            }
+
             async function insertImageFiles(editor, files) {
                 const imgFiles = (files || []).filter(f => f && f.type && f.type.indexOf('image/') === 0);
                 if (imgFiles.length === 0) return;
 
-                restoreCaret(editor);
+                focusInsertPoint(editor);
                 let total = 0;
                 for (let i = 0; i < imgFiles.length; i++) {
                     let dataUrl;
@@ -2447,8 +2544,20 @@
                     total += estimateBytes(dataUrl);
                     // 每张图后面补一个空段落，方便继续打字 / 继续插图
                     const html = `<img class="qa-img" src="${dataUrl}" alt="" draggable="true"><p><br></p>`;
+                    const beforeCount = editor.querySelectorAll('img.qa-img').length;
+                    // 里面已经有图时才备份 —— 只有这时才存在「被吃掉」的风险
+                    const backup = beforeCount > 0 ? editor.innerHTML : null;
                     document.execCommand('insertHTML', false, html);
+                    // 有些浏览器插完会把这张图选中，下一张就会顶掉它 —— 插一张、折叠一次
+                    collapseCaretAfterInsert();
+                    // 自愈：没插进去、或反而少了图 → 回滚并用 DOM 直接插
+                    if (editor.querySelectorAll('img.qa-img').length <= beforeCount) {
+                        if (backup !== null) editor.innerHTML = backup;
+                        insertImageNodeFallback(editor, dataUrl);
+                        saveCaret(editor);
+                    }
                 }
+                saveCaret(editor);      // 光标落在最后一张之后，下次继续插图就接着往后排
                 normalizeEditorImages(editor);
                 syncFreeHeight(editor);
                 if (total > 2 * 1024 * 1024) {
@@ -2513,7 +2622,8 @@
                 if (!imageUI.img || !imageUI.editor || !imageUI.label) return;
                 const rect = imageUI.img.getBoundingClientRect();
                 const pct = Math.max(1, Math.round(rect.width / editorInnerWidth(imageUI.editor) * 100));
-                imageUI.label.textContent = `${pct}% · ${Math.round(rect.width)}px`;
+                // 拉过比例之后宽度不再是形状的唯一决定因素，直接把 宽×高 显示出来
+                imageUI.label.textContent = `${pct}% · ${Math.round(rect.width)}×${Math.round(rect.height)}px`;
                 if (imageUI.slider) imageUI.slider.value = Math.min(100, Math.max(5, pct));
             }
 
@@ -2556,11 +2666,39 @@
                 updateSizeLabel();
             }
 
+            /**
+             * 当前显示比例（高 ÷ 宽）。
+             * 优先用存下来的 data-far（拉伸过之后才是"现在看到的形状"），
+             * 否则量实际渲染尺寸，最后退回图片自身的原始比例。
+             */
+            function imageAspect(img) {
+                const ar = parseFloat(img.dataset.far);
+                if (!isNaN(ar) && ar > 0) return ar;
+                const r = img.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) return r.height / r.width;
+                if (img.naturalWidth > 0 && img.naturalHeight > 0) return img.naturalHeight / img.naturalWidth;
+                return null;
+            }
+
+            /**
+             * 写尺寸。h 传 null 表示「等比」——高度按当前比例算出来写死，
+             * 这样跨设备 / 换宽度时形状不会自己变回去。
+             */
+            function setImageSize(img, w, h) {
+                if (!img) return;
+                const width = Math.max(24, Math.min(4000, Math.round(w)));
+                img.style.width = width + 'px';
+                if (h === null || h === undefined) {
+                    const ar = imageAspect(img);
+                    img.style.height = ar ? Math.round(width * ar) + 'px' : 'auto';
+                } else {
+                    img.style.height = Math.max(16, Math.min(8000, Math.round(h))) + 'px';
+                }
+            }
+
             function setImageWidth(px) {
                 if (!imageUI.img) return;
-                const w = Math.max(40, Math.min(4000, Math.round(px)));
-                imageUI.img.style.width = w + 'px';
-                imageUI.img.style.height = 'auto';
+                setImageSize(imageUI.img, px, null);           // 等比：只给宽度，高度按比例
                 positionImageUI();
                 saveFreeLayout(imageUI.img, imageUI.editor);   // 改了尺寸，相对宽高也要跟着变
                 syncFreeHeight(imageUI.editor);
@@ -2568,10 +2706,19 @@
 
             function setImagePercent(pct) {
                 if (!imageUI.img) return;
-                imageUI.img.style.width = Math.max(5, Math.min(100, pct)) + '%';
-                imageUI.img.style.height = 'auto';
+                const img = imageUI.img;
+                const p = Math.max(5, Math.min(100, pct));
+                const base = freeBoxWidth(imageUI.editor) || 0;
+                const ar = parseFloat(img.dataset.far);
+                if (!isNaN(ar) && ar > 0 && base) {
+                    // 拉伸过比例的：宽高都得写死成像素，才保得住形状
+                    setImageSize(img, base * p / 100, null);
+                } else {
+                    img.style.width = p + '%';
+                    img.style.height = 'auto';
+                }
                 positionImageUI();
-                saveFreeLayout(imageUI.img, imageUI.editor);
+                saveFreeLayout(img, imageUI.editor);
                 syncFreeHeight(imageUI.editor);
             }
 
@@ -2593,13 +2740,25 @@
                      <span class="img-tb-sep"></span>
                      ${IMG_LAYOUTS.map(l => `<button type="button" class="img-tb-btn" data-act="${l.act}" title="${l.title}">${ICON[l.icon]}</button>`).join('')}
                      <button type="button" class="img-tb-btn" data-act="origin" title="原始尺寸"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6.2V2.2h4M14 9.8v4h-4M14 6.2v-4h-4M2 9.8v4h4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                     <button type="button" class="img-tb-btn" data-act="ratio" title="恢复原始比例（拉变形后一键还原）">${ICON.ratio}</button>
                      <button type="button" class="img-tb-btn img-tb-del" data-act="del" title="删除图片"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 4.6h10.8M6 4.6V2.9h4v1.7M4.1 4.6l.8 8.5h6.2l.8-8.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
                 box.appendChild(toolbar);
 
-                ['nw', 'ne', 'se', 'sw'].forEach(pos => {
+                // 四角（圆点）＝等比缩放；四边中点（方点）＝单向拉伸，宽高比随便改
+                [
+                    { pos: 'nw', tip: '等比缩放' },
+                    { pos: 'ne', tip: '等比缩放' },
+                    { pos: 'se', tip: '等比缩放' },
+                    { pos: 'sw', tip: '等比缩放' },
+                    { pos: 'n',  tip: '上下拉伸（只改高度）' },
+                    { pos: 's',  tip: '上下拉伸（只改高度）' },
+                    { pos: 'e',  tip: '左右拉伸（只改宽度）' },
+                    { pos: 'w',  tip: '左右拉伸（只改宽度）' }
+                ].forEach(function(item) {
                     const h = document.createElement('div');
-                    h.className = 'img-resize-handle ' + pos;
-                    h.dataset.pos = pos;
+                    h.className = 'img-resize-handle ' + item.pos;
+                    h.dataset.pos = item.pos;
+                    h.title = item.tip;
                     h.addEventListener('pointerdown', startResizeDrag);
                     box.appendChild(h);
                 });
@@ -2630,7 +2789,15 @@
                     } else if (act === 'origin') {
                         imageUI.img.style.width = '';
                         imageUI.img.style.height = '';
+                        if (imageUI.img.dataset) delete imageUI.img.dataset.far;
                         positionImageUI();
+                    } else if (act === 'ratio') {
+                        // 只把形状还原成图片本来的比例，宽度保持不变
+                        imageUI.img.style.height = 'auto';
+                        if (imageUI.img.dataset) delete imageUI.img.dataset.far;
+                        positionImageUI();
+                        saveFreeLayout(imageUI.img, imageUI.editor);
+                        syncFreeHeight(imageUI.editor);
                     } else if (act === 'free') {
                         // 自由漫游 ⇄ 回归文档流
                         toggleImageFree(imageUI.img, imageUI.editor);
@@ -2651,6 +2818,12 @@
                 positionImageUI();
             }
 
+            /**
+             * 缩放手柄：
+             *  - 四角（圆点，nw/ne/se/sw）＝等比缩放：只取一个方向的位移，高度按当前比例走
+             *  - 四边（方点，n/s/e/w）＝单向拉伸：拖左右只改宽、拖上下只改高，宽高比随意变
+             * 自由图片的 w / n 方向还要反向补偿 left / top，保证「对边不动」。
+             */
             function startResizeDrag(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2658,19 +2831,48 @@
                 if (!img) return;
 
                 const pos = e.currentTarget.dataset.pos;
-                const dirX = (pos === 'ne' || pos === 'se') ? 1 : -1;
-                const startX = e.clientX;
-                const startW = img.getBoundingClientRect().width;
+                const corner = pos.length === 2;                 // 两个字母的是角手柄
+                const startX = e.clientX, startY = e.clientY;
+                const r0 = img.getBoundingClientRect();
+                const startW = r0.width, startH = r0.height;
+                const ratio = startW > 0 ? (startH / startW) : 1;  // 等比缩放用「当前」比例，不是原始比例
+                const startLeft = parseFloat(img.style.left) || 0;
+                const startTop = parseFloat(img.style.top) || 0;
+                const isFree = isFreeImage(img);
                 const handle = e.currentTarget;
                 try { handle.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
 
                 const onMove = ev => {
-                    setImageWidth(startW + (ev.clientX - startX) * dirX);
+                    const dx = ev.clientX - startX;
+                    const dy = ev.clientY - startY;
+                    let w = startW, h = startH;
+                    if (corner) {
+                        // 取 x / y 里位移大的那个，斜着拖也跟手
+                        const d = Math.abs(dx) >= Math.abs(dy) ? dx : dy;
+                        w = startW + (pos.indexOf('e') > -1 ? d : -d);
+                        h = w * ratio;
+                    } else {
+                        if (pos === 'e') w = startW + dx;
+                        if (pos === 'w') w = startW - dx;
+                        if (pos === 's') h = startH + dy;
+                        if (pos === 'n') h = startH - dy;
+                    }
+                    w = Math.max(24, Math.min(4000, w));
+                    h = Math.max(16, Math.min(8000, h));
+                    setImageSize(img, w, h);
+                    if (isFree) {
+                        // 动左边就往右补 left、动上边就往下补 top —— 保证右下角/底边不跑
+                        if (pos.indexOf('w') > -1) img.style.left = Math.round(startLeft + (startW - w)) + 'px';
+                        if (pos.indexOf('n') > -1) img.style.top = Math.round(startTop + (startH - h)) + 'px';
+                    }
+                    positionImageUI();
                 };
                 const onUp = () => {
                     window.removeEventListener('pointermove', onMove);
                     window.removeEventListener('pointerup', onUp);
                     window.removeEventListener('pointercancel', onUp);
+                    saveFreeLayout(img, imageUI.editor);   // 落定后回写比例，换设备才保得住形状
+                    syncFreeHeight(imageUI.editor);
                 };
                 window.addEventListener('pointermove', onMove);
                 window.addEventListener('pointerup', onUp);
@@ -2965,16 +3167,36 @@
             // ============================================================
             //  初始化数据
             // ============================================================
+            function fillSampleData() {
+                qaData = getSampleData();
+                const cats = new Set(qaData.map(item => item.category));
+                categories = ['全部', ...Array.from(cats)];
+                // 起始 id 必须大于示例数据的最大 id，否则新条目会撞号
+                nextId = qaData.reduce((m, i) => Math.max(m, parseInt(i.id, 10) || 0), 0) + 1;
+                lastEditTime = new Date();
+                saveData();
+            }
+
             function initData() {
                 const hasData = loadData();
-                if (!hasData || qaData.length === 0) {
-                    qaData = getSampleData();
-                    const cats = new Set(qaData.map(item => item.category));
-                    categories = ['全部', ...Array.from(cats)];
-                    // 起始 id 必须大于示例数据的最大 id，否则新条目会撞号
-                    nextId = qaData.reduce((m, i) => Math.max(m, parseInt(i.id, 10) || 0), 0) + 1;
-                    lastEditTime = new Date();
-                    saveData();
+                // 只有「全新安装」才铺示例数据。
+                // 原来这里多写了 `|| qaData.length === 0` —— 用户把 7 条示例全删光（或点「清空全部」）
+                // 之后一刷新又被灌回来，表现就是「默认问答删不掉」。
+                // 存过数据就一律尊重用户的数据：空就是空。
+                if (!hasData) {
+                    if (syncConfigured()) {
+                        // 新设备（手机）第一次打开，而且已经配好同步：
+                        // 先别铺示例，等云端拉回来再说 —— 否则示例会跟真数据混在一起，
+                        // 用户还得一条条删。拉不到（离线）时再由启动流程补铺。
+                        awaitingFirstSync = true;
+                        qaData = [];
+                        categories = ['全部', '默认'];
+                        nextId = 1001;          // 拉取时会用云端的 nextId 覆盖
+                        lastEditTime = new Date();
+                        saveData();
+                    } else {
+                        fillSampleData();
+                    }
                 }
                 updateLastSaved();
             }
@@ -3058,7 +3280,9 @@
                 star: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 1.7l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.5l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>',
                 list: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2.4 4h11.2M2.4 8h11.2M2.4 12h11.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
                 // 安装引导横幅
-                install: '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" style="vertical-align:-3px;"><rect x="4.4" y="1.6" width="7.2" height="12.8" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7 12.4h2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+                install: '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" style="vertical-align:-3px;"><rect x="4.4" y="1.6" width="7.2" height="12.8" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7 12.4h2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+                // 恢复原始比例：一个被斜向拉伸的矩形 + 双向箭头
+                ratio: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="1.6" y="2.6" width="12.8" height="10.8" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M4.6 11.4L11.4 4.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M8.2 4.6h3.2v3.2M7.8 11.4H4.6V8.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
             };
 
             // 图片排版模式：class 名 ↔ 工具条按钮
@@ -3139,12 +3363,15 @@
                 if (!w) return;
                 const left = parseFloat(img.style.left) || 0;
                 const top = parseFloat(img.style.top) || 0;
-                const iw = img.getBoundingClientRect().width ||
-                           img.offsetWidth || parseFloat(img.style.width) || 0;
+                const rect = img.getBoundingClientRect();
+                const iw = rect.width || img.offsetWidth || parseFloat(img.style.width) || 0;
                 if (!iw) return;
+                const ih = rect.height || img.offsetHeight || parseFloat(img.style.height) || 0;
                 img.dataset.fx = (left / w * 100).toFixed(2);
                 img.dataset.fy = (top / w * 100).toFixed(2);
                 img.dataset.fw = (iw / w * 100).toFixed(2);
+                // 宽高比：自由拉伸过的图片必须记下来，否则另一台设备会按原始比例变回去
+                if (ih > 0) img.dataset.far = (ih / iw).toFixed(4);
             }
 
             /**
@@ -3188,10 +3415,13 @@
                         adoptLegacyFreeImage(img, container);
                         return;
                     }
+                    const pxW = Math.round(fw / 100 * w);
+                    const ar = parseFloat(img.dataset.far);
                     img.style.left = Math.round(fx / 100 * w) + 'px';
                     img.style.top = Math.round(fy / 100 * w) + 'px';
-                    img.style.width = Math.round(fw / 100 * w) + 'px';
-                    img.style.height = 'auto';
+                    img.style.width = pxW + 'px';
+                    // 拉伸过 → 按比例还原高度；没拉伸过 → 交给浏览器按原始比例
+                    img.style.height = (!isNaN(ar) && ar > 0) ? Math.round(pxW * ar) + 'px' : 'auto';
                 });
                 syncFreeHeight(container);
             }
@@ -3599,9 +3829,10 @@
                         const url = dt.getData('text/uri-list') || dt.getData('text/plain');
                         if (url && /^https?:\/\//i.test(url.trim())) {
                             e.preventDefault();
-                            restoreCaret(editor);
+                            focusInsertPoint(editor);      // 同样先折叠，别把已选中的图替换掉
                             document.execCommand('insertHTML', false,
                                 `<img class="qa-img" src="${escapeHtml(url.trim())}" alt="" draggable="true"><p><br></p>`);
+                            collapseCaretAfterInsert();
                             normalizeEditorImages(editor);
                             return;
                         }
@@ -3626,9 +3857,12 @@
                 attachEditorFeatures(newAnswerEditor, toolbar);
 
                 newAnswerEditor.addEventListener('focus', function() {
-                    if (this.innerHTML === '<p><br></p>' || this.innerText.trim() === '') {
-                        this.innerHTML = '';
-                    }
+                    // ⚠️ 千万不要只判 innerText 为空：图片不产生文本，
+                    //    「编辑器里只有图片」时 innerText 也是空 —— 于是第二次插图时
+                    //    （insertImageFiles 会先 focus 一下）这里会把第一张图连同内容整块清掉，
+                    //    表现就是「第二张图把第一张顶掉了」。
+                    //    用户「先打几个空格就好使」正是因为有了文字，innerText 不再为空。
+                    if (isEditorBlank(this)) this.innerHTML = '';
                 });
             }
 
@@ -4611,6 +4845,7 @@
             let syncBusy = false;
             let autoPushTimer = null;
             let pendingPush = false;     // 有改动还没推上去
+            let awaitingFirstSync = false;  // 新设备首次打开、且已配同步 → 等云端结果再决定要不要铺示例
             let lastSyncAt = null;
 
             function setSyncStatus(text) { if (syncStatus) syncStatus.textContent = text; }
@@ -4830,10 +5065,12 @@
                     setSyncStatus('已拉取 · ' + bits.join(' / ') + ' · ' + formatTime(lastSyncAt));
                     if (!silent) alert('✅ 已合并云端数据：' + bits.join('，') + '。');
                     if (syncCfg.auto) scheduleAutoPush();      // 拉完再推一次，两边收敛
+                    return true;
                 } catch (e) {
                     console.error('拉取失败', e);
                     setSyncStatus('拉取失败：' + e.message);
                     if (!silent) alert('❌ 拉取失败：' + e.message);
+                    return false;
                 } finally { syncBusy = false; }
             }
 
@@ -5081,10 +5318,11 @@
             // ============================================================
             //  启动
             // ============================================================
-            initData();
-            loadPrefs();
+            // 同步配置要先读：initData 需要判断「这台设备配没配过云同步」
             loadSyncCfg();
             loadTombstones();
+            initData();
+            loadPrefs();
             applyTheme(theme);
             setupEditorToolbar();
             renderAll();
@@ -5106,7 +5344,16 @@
             // 开了自动同步 → 启动时静默拉一次（失败也不打扰，只在状态栏提示）
             // 配好了同步 → 打开就静默拉一次。原来只有开了「自动同步」才拉，
             // 手动模式下另一台删掉的东西永远看不见，这就是"删除不同步"的体感来源之一。
-            if (syncConfigured()) doSyncPull(true);
+            if (syncConfigured()) {
+                doSyncPull(true).then(function (ok) {
+                    // 新设备首次打开：拉到了就用云端的（不铺示例）；拉不到（离线）才补一份示例
+                    if (!awaitingFirstSync) return;
+                    awaitingFirstSync = false;
+                    if (!ok && qaData.length === 0) { fillSampleData(); renderAll(); }
+                });
+            } else if (awaitingFirstSync) {
+                awaitingFirstSync = false;
+            }
 
             // ============================================================
             //  Service Worker（离线可用 / 添加到主屏幕）
