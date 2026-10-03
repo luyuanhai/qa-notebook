@@ -2855,13 +2855,14 @@
             // ============================================================
             let quotaWarned = false;
 
-            function saveData() {
+            /** quiet=true 时只落盘、不排自动推送（用于同步内部的中间保存） */
+            function saveData(quiet) {
                 try {
                     localStorage.setItem('qaData', JSON.stringify(qaData));
                     localStorage.setItem('categories', JSON.stringify(categories));
                     localStorage.setItem('nextId', String(nextId));
                     localStorage.setItem('lastEditTime', JSON.stringify(lastEditTime));
-                    scheduleAutoPush();     // 开了自动同步就顺手推上去（内部有 4 秒防抖）
+                    if (!quiet) scheduleAutoPush();     // 开了自动同步就顺手推上去（内部有 4 秒防抖）
                     return true;
                 } catch (e) {
                     console.warn('保存失败:', e);
@@ -4609,6 +4610,7 @@
                             headerName: '', headerValue: '', auto: false };
             let syncBusy = false;
             let autoPushTimer = null;
+            let pendingPush = false;     // 有改动还没推上去
             let lastSyncAt = null;
 
             function setSyncStatus(text) { if (syncStatus) syncStatus.textContent = text; }
@@ -4678,6 +4680,9 @@
             /* ---------- 上传 ---------- */
             async function remotePush(payload) {
                 const body = JSON.stringify(payload);
+                // keepalive：页面关掉/切后台时也能把这一发请求送出去（浏览器对 keepalive 有
+                // 64KB 请求体上限，超了会直接失败，所以只在小包时启用，图片多的包照常走普通请求）
+                const ka = body.length < 60000;
                 if (syncCfg.backend === 'gist') {
                     const files = {}; files[SYNC_FILE] = { content: body };
                     const headers = ghHeaders();
@@ -4685,11 +4690,12 @@
                     let res;
                     if (syncCfg.gistId) {
                         res = await fetch(SYNC_API + '/' + encodeURIComponent(syncCfg.gistId), {
-                            method: 'PATCH', headers: headers, body: JSON.stringify({ files: files })
+                            method: 'PATCH', headers: headers, keepalive: ka,
+                            body: JSON.stringify({ files: files })
                         });
                     } else {
                         res = await fetch(SYNC_API, {
-                            method: 'POST', headers: headers,
+                            method: 'POST', headers: headers, keepalive: ka,
                             body: JSON.stringify({ description: '问答知识库 · 同步数据', public: false, files: files })
                         });
                     }
@@ -4705,7 +4711,7 @@
                 }
                 const h = { 'Content-Type': 'application/json' };
                 if (syncCfg.headerName) h[syncCfg.headerName] = syncCfg.headerValue || '';
-                const res = await fetch(syncCfg.putUrl, { method: 'PUT', headers: h, body: body });
+                const res = await fetch(syncCfg.putUrl, { method: 'PUT', headers: h, body: body, keepalive: ka });
                 if (!res.ok) throw new Error('上传接口返回 ' + res.status);
                 return {};
             }
@@ -4713,14 +4719,18 @@
             /* ---------- 拉取 ---------- */
             async function remotePull() {
                 if (syncCfg.backend === 'gist') {
-                    const metaRes = await fetch(SYNC_API + '/' + encodeURIComponent(syncCfg.gistId), { headers: ghHeaders() });
+                    const metaRes = await fetch(SYNC_API + '/' + encodeURIComponent(syncCfg.gistId),
+                                                { headers: ghHeaders(), cache: 'no-store' });
                     if (!metaRes.ok) throw new Error('读取 Gist 失败：HTTP ' + metaRes.status + '（令牌失效或 ID 不对）');
                     const meta = await metaRes.json();
                     const fs = meta.files || {};
                     const f = fs[SYNC_FILE] || Object.keys(fs).map(k => fs[k])[0];
                     if (!f) throw new Error('这个 Gist 里还没有同步文件，先点「上传到云端」');
                     // 走 raw_url 拿全文 —— 接口返回的 content 超过 1MB 会被截断
-                    const rawRes = await fetch(f.raw_url, { cache: 'no-store' });
+                    // 再加时间戳参数：raw.githubusercontent.com 有 CDN 缓存，
+                    // 不加的话刚上传完立刻拉取，拿到的可能还是上一版（表现为"同步了没生效"）
+                    const rawUrl = f.raw_url + (f.raw_url.indexOf('?') > -1 ? '&' : '?') + '_t=' + Date.now();
+                    const rawRes = await fetch(rawUrl, { cache: 'no-store' });
                     if (!rawRes.ok) throw new Error('读取同步内容失败：HTTP ' + rawRes.status);
                     return { payload: JSON.parse(await rawRes.text()), updatedAt: meta.updated_at };
                 }
@@ -4742,8 +4752,29 @@
 
                 const map = new Map();
                 qaData.forEach(i => map.set(String(i.id), i));
-                let added = 0, updated = 0, skipped = 0;
+                let added = 0, updated = 0, skipped = 0, removed = 0;
 
+                // ---- ① 先应用删除标记：别的设备删掉的，本机也要跟着删 ----
+                // 只按 tombstone 单向判定是不够的（云端 payload 里根本没这条，遍历不到），
+                // 必须回头扫一遍本地数据，否则「只同步新增、不同步删除」。
+                const doomed = [];                       // 存原始 id（可能是数字），便于清勾选
+                qaData.forEach(i => {
+                    const key = String(i.id);
+                    const delAt = tombstones[key] ? new Date(tombstones[key]).getTime() : 0;
+                    if (!delAt) return;
+                    const editAt = new Date(String(i.time || '')).getTime() || 0;
+                    // 删除之后又被改过（两边都算，留 60 秒时钟误差）→ 以最后修改为准，不删
+                    if (editAt > delAt + 60000) return;
+                    doomed.push(i.id);
+                });
+                if (doomed.length) {
+                    const set = new Set(doomed.map(String));
+                    qaData = qaData.filter(i => !set.has(String(i.id)));
+                    doomed.forEach(id => { selectedIds.delete(id); selectedIds.delete(String(id)); });
+                    removed = doomed.length;
+                }
+
+                // ---- ② 再合并云端条目 ----
                 payload.qaData.forEach(ri => {
                     if (!ri || ri.id === undefined || ri.id === null) return;
                     const key = String(ri.id);
@@ -4765,9 +4796,10 @@
                 if (!isNaN(rn) && rn > nextId) nextId = rn;
                 qaData.forEach(i => { const n = parseInt(i.id, 10); if (!isNaN(n) && n >= nextId) nextId = n + 1; });
 
+                if (removed) refreshCategories();
                 pruneTombstones();
                 saveTombstones();
-                return { added: added, updated: updated, skipped: skipped };
+                return { added: added, updated: updated, skipped: skipped, removed: removed };
             }
 
             /* ---------- 对外动作 ---------- */
@@ -4782,15 +4814,21 @@
                 try {
                     const r = await remotePull();
                     const stat = mergePayload(r.payload);
+                    // 别的设备删空的分类，本机正停在该分类上 → 退回「全部」，否则一片空白
+                    if (currentCategory !== '全部' && categories.indexOf(currentCategory) === -1) {
+                        currentCategory = '全部';
+                    }
+                    if (stat.removed) clearUndoBuffer();   // 撤销缓冲里可能存着已被云端删掉的条目
                     lastEditTime = new Date();
                     updateLastSaved();
                     renderAll();
                     saveData();
                     lastSyncAt = new Date();
-                    setSyncStatus(`已拉取 · 新增 ${stat.added} / 更新 ${stat.updated}` +
-                                  (stat.skipped ? ` / 忽略已删 ${stat.skipped}` : '') + ' · ' + formatTime(lastSyncAt));
-                    if (!silent) alert(`✅ 已合并云端数据：新增 ${stat.added} 条，更新 ${stat.updated} 条` +
-                                       (stat.skipped ? `，忽略 ${stat.skipped} 条本地已删除的` : '') + '。');
+                    const bits = [`新增 ${stat.added}`, `更新 ${stat.updated}`];
+                    if (stat.removed) bits.push(`删除 ${stat.removed}`);
+                    if (stat.skipped) bits.push(`忽略已删 ${stat.skipped}`);
+                    setSyncStatus('已拉取 · ' + bits.join(' / ') + ' · ' + formatTime(lastSyncAt));
+                    if (!silent) alert('✅ 已合并云端数据：' + bits.join('，') + '。');
                     if (syncCfg.auto) scheduleAutoPush();      // 拉完再推一次，两边收敛
                 } catch (e) {
                     console.error('拉取失败', e);
@@ -4804,9 +4842,27 @@
                 if (!syncPushable()) { openSyncPanel(); if (!silent) alert('先填好云同步设置'); return; }
                 syncBusy = true; setSyncStatus('正在上传…');
                 try {
+                    // ⚠️ 上传是「整包覆盖」，不先合并对方的数据，就会把对方刚写进去的
+                    //    删除标记冲掉（表现为：B 一上传，A 之前删掉的东西又活了）。
+                    //    所以上传前先静默拉一次并合并 —— 即 read-modify-write。
+                    let merged = null;
+                    if (syncConfigured()) {
+                        try {
+                            merged = mergePayload((await remotePull()).payload);
+                            if (currentCategory !== '全部' && categories.indexOf(currentCategory) === -1) {
+                                currentCategory = '全部';
+                            }
+                            renderAll();
+                            saveData(true);      // 安静保存：别再触发一次自动推送
+                        } catch (e) {
+                            console.warn('上传前预合并失败，改为直接上传本地数据', e);
+                        }
+                    }
                     const r = await remotePush(buildPayload());
                     lastSyncAt = new Date();
-                    setSyncStatus(`已上传 ${qaData.length} 条 · ${formatTime(lastSyncAt)}`);
+                    const extra = merged && (merged.added || merged.updated || merged.removed)
+                        ? `（先合并了云端：新增${merged.added}/更新${merged.updated}/删除${merged.removed}）` : '';
+                    setSyncStatus(`已上传 ${qaData.length} 条${extra ? ' ' + extra : ''} · ${formatTime(lastSyncAt)}`);
                     if (!silent) alert(`✅ 已上传 ${qaData.length} 条问答到云端。` +
                                        (r && r.id ? `\nGist ID：${r.id}（已自动填好，另一台设备填同一个 ID 即可）` : ''));
                 } catch (e) {
@@ -4818,9 +4874,24 @@
 
             function scheduleAutoPush() {
                 if (!syncCfg.auto || !syncPushable()) return;
+                pendingPush = true;              // 有改动等着推
                 if (autoPushTimer) clearTimeout(autoPushTimer);
-                autoPushTimer = setTimeout(function() { doSyncPush(true); }, 4000);
+                autoPushTimer = setTimeout(function() { autoPushTimer = null; pendingPush = false; doSyncPush(true); }, 4000);
             }
+
+            /** 立刻把待推的改动送出去（不等 4 秒）——切后台/关页面时用 */
+            function flushAutoPush() {
+                if (!pendingPush || !syncCfg.auto || !syncPushable()) return;
+                if (autoPushTimer) { clearTimeout(autoPushTimer); autoPushTimer = null; }
+                pendingPush = false;
+                doSyncPush(true);
+            }
+            // 手机切后台时 setTimeout 会被冻结甚至丢弃，防抖那 4 秒可能永远等不到，
+            // 所以在页面隐藏/卸载的瞬间抢发一次（配合 keepalive，关页面也能送出）
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'hidden') flushAutoPush();
+            });
+            window.addEventListener('pagehide', flushAutoPush);
 
             async function testSync() {
                 setSyncStatus('测试中…');
@@ -4866,6 +4937,9 @@
                     : '未配置');
             }
             function readSyncForm() {
+                // 面板没展开时，表单里还是 HTML 的初始空值 —— 拿它覆盖会把已存的令牌/Gist ID 冲掉，
+                // 表现就是「明明配好了，一上传就说没配置」。所以只有面板真正打开才认表单。
+                if (syncPanel.classList.contains('hidden')) return;
                 syncCfg.backend = syncBackendSel.value;
                 syncCfg.auto = !!syncAutoChk.checked;
                 syncCfg.token = syncToken.value.trim();
@@ -5030,7 +5104,9 @@
                 setTimeout(relayoutAllFreeImages, 250);
             });
             // 开了自动同步 → 启动时静默拉一次（失败也不打扰，只在状态栏提示）
-            if (syncCfg.auto && syncConfigured()) doSyncPull(true);
+            // 配好了同步 → 打开就静默拉一次。原来只有开了「自动同步」才拉，
+            // 手动模式下另一台删掉的东西永远看不见，这就是"删除不同步"的体感来源之一。
+            if (syncConfigured()) doSyncPull(true);
 
             // ============================================================
             //  Service Worker（离线可用 / 添加到主屏幕）
